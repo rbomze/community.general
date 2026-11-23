@@ -1,23 +1,19 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 
 # Copyright (c) 2012, Dag Wieers <dag@wieers.com>
 # GNU General Public License v3.0+ (see LICENSES/GPL-3.0-or-later.txt or https://www.gnu.org/licenses/gpl-3.0.txt)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
-
-DOCUMENTATION = r'''
----
+DOCUMENTATION = r"""
 module: hponcfg
 author: Dag Wieers (@dagwieers)
-short_description: Configure HP iLO interface using hponcfg
+short_description: Configure HP iLO interface using C(hponcfg)
 description:
-  - This modules configures the HP iLO interface using hponcfg.
+  - This modules configures the HP iLO interface using C(hponcfg).
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: none
@@ -26,32 +22,31 @@ attributes:
 options:
   path:
     description:
-     - The XML file as accepted by hponcfg.
+      - The XML file as accepted by C(hponcfg).
     required: true
     aliases: ['src']
     type: path
   minfw:
     description:
-     - The minimum firmware level needed.
-    required: false
+      - The minimum firmware level needed.
     type: str
   executable:
     description:
-     - Path to the hponcfg executable (C(hponcfg) which uses $PATH).
+      - Path to the hponcfg executable (C(hponcfg) which uses E(PATH)).
     default: hponcfg
     type: str
   verbose:
     description:
-     - Run hponcfg in verbose mode (-v).
+      - Run C(hponcfg) in verbose mode (-v).
     default: false
     type: bool
 requirements:
- - hponcfg tool
+  - hponcfg tool
 notes:
- - You need a working hponcfg on the target system.
-'''
+  - You need a working C(hponcfg) on the target system.
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Example hponcfg configuration XML
   ansible.builtin.copy:
     content: |
@@ -78,19 +73,19 @@ EXAMPLES = r'''
   community.general.hponcfg:
     src: /tmp/enable-ssh.xml
     executable: /opt/hp/tools/hponcfg
-'''
+"""
 
-from ansible_collections.community.general.plugins.module_utils.cmd_runner import CmdRunner, cmd_runner_fmt
-from ansible_collections.community.general.plugins.module_utils.module_helper import ModuleHelper
+from ansible_collections.community.general.plugins.module_utils._cmd_runner import CmdRunner, cmd_runner_fmt
+from ansible_collections.community.general.plugins.module_utils._module_helper import ModuleHelper
 
 
 class HPOnCfg(ModuleHelper):
     module = dict(
         argument_spec=dict(
-            src=dict(type='path', required=True, aliases=['path']),
-            minfw=dict(type='str'),
-            executable=dict(default='hponcfg', type='str'),
-            verbose=dict(default=False, type='bool'),
+            src=dict(type="path", required=True, aliases=["path"]),
+            minfw=dict(type="str"),
+            executable=dict(default="hponcfg", type="str"),
+            verbose=dict(default=False, type="bool"),
         )
     )
     command_args_formats = dict(
@@ -106,7 +101,7 @@ class HPOnCfg(ModuleHelper):
             self.command_args_formats,
             check_rc=True,
         )
-        runner(['src', 'verbose', 'minfw']).run()
+        runner(["src", "verbose", "minfw"]).run()
 
         # Consider every action a change (not idempotent yet!)
         self.changed = True
@@ -116,5 +111,5 @@ def main():
     HPOnCfg.execute()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

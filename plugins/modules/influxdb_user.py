@@ -1,17 +1,13 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 
 # Copyright (c) 2017, Vitaliy Zhhuta <zhhuta () gmail.com>
 # insipred by Kamil Szczygiel <kamil.szczygiel () intel.com> influxdb_database module
 # GNU General Public License v3.0+ (see LICENSES/GPL-3.0-or-later.txt or https://www.gnu.org/licenses/gpl-3.0.txt)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from __future__ import absolute_import, division, print_function
+from __future__ import annotations
 
-__metaclass__ = type
-
-DOCUMENTATION = r'''
----
+DOCUMENTATION = r"""
 module: influxdb_user
 short_description: Manage InfluxDB users
 description:
@@ -33,35 +29,45 @@ options:
   user_password:
     description:
       - Password to be set for the user.
-    required: false
     type: str
+  force_password_update:
+    description:
+      - Force the password to be updated, without checking whether it actually needs to change.
+      - By default, the module tries to detect a password change by logging in with O(user_password) and only calls the
+        password-update API when that login fails. This detection is inconclusive when the InfluxDB server does not enforce
+        authentication (for example, when C(auth-enabled) is not set), in which case the login always succeeds and the
+        password is never reported as needing an update.
+      - Set this to V(true) to always update the password when O(user_password) is provided, regardless of the detection
+        result.
+    default: false
+    type: bool
+    version_added: 13.4.0
   admin:
     description:
       - Whether the user should be in the admin role or not.
-      - Since version 2.8, the role will also be updated.
+      - Since version 2.8, the role is also updated.
     default: false
     type: bool
   state:
     description:
       - State of the user.
-    choices: [ absent, present ]
+    choices: [absent, present]
     default: present
     type: str
   grants:
     description:
       - Privileges to grant to this user.
       - Takes a list of dicts containing the "database" and "privilege" keys.
-      - If this argument is not provided, the current grants will be left alone.
-      - If an empty list is provided, all grants for the user will be removed.
+      - If this argument is not provided, the current grants are left alone.
+      - If an empty list is provided, all grants for the user are removed.
     type: list
     elements: dict
 extends_documentation_fragment:
-  - community.general.influxdb
-  - community.general.attributes
+  - community.general._influxdb
+  - community.general._attributes
+"""
 
-'''
-
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Create a user on localhost using default login credentials
   community.general.influxdb_user:
     user_name: john
@@ -95,24 +101,30 @@ EXAMPLES = r'''
       - database: 'graphite'
         privilege: 'READ'
 
+- name: Force a user's password to be updated, even without authentication enabled on the server
+  community.general.influxdb_user:
+    user_name: john
+    user_password: s3cr3t
+    force_password_update: true
+    login_username: "{{ influxdb_username }}"
+    login_password: "{{ influxdb_password }}"
+
 - name: Destroy a user using custom login credentials
   community.general.influxdb_user:
     user_name: john
     login_username: "{{ influxdb_username }}"
     login_password: "{{ influxdb_password }}"
     state: absent
-'''
+"""
 
-RETURN = r'''
-#only defaults
-'''
+RETURN = r"""#"""
 
 import json
 
-from ansible.module_utils.urls import ConnectionError
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.common.text.converters import to_native
-import ansible_collections.community.general.plugins.module_utils.influxdb as influx
+from ansible.module_utils.urls import ConnectionError
+
+import ansible_collections.community.general.plugins.module_utils._influxdb as influx
 
 
 def find_user(module, client, user_name):
@@ -121,11 +133,11 @@ def find_user(module, client, user_name):
     try:
         users = client.get_list_users()
         for user in users:
-            if user['user'] == user_name:
+            if user["user"] == user_name:
                 user_result = user
                 break
     except ConnectionError as e:
-        module.fail_json(msg=to_native(e))
+        module.fail_json(msg=f"{e}")
     return user_result
 
 
@@ -137,10 +149,10 @@ def check_user_password(module, client, user_name, user_password):
         if e.code == 401:
             return False
     except ConnectionError as e:
-        module.fail_json(msg=to_native(e))
+        module.fail_json(msg=f"{e}")
     finally:
         # restore previous user
-        client.switch_user(module.params['username'], module.params['password'])
+        client.switch_user(module.params["username"], module.params["password"])
     return True
 
 
@@ -149,7 +161,7 @@ def set_user_password(module, client, user_name, user_password):
         try:
             client.set_user_password(user_name, user_password)
         except ConnectionError as e:
-            module.fail_json(msg=to_native(e))
+            module.fail_json(msg=f"{e}")
 
 
 def create_user(module, client, user_name, user_password, admin):
@@ -157,7 +169,7 @@ def create_user(module, client, user_name, user_password, admin):
         try:
             client.create_user(user_name, user_password, admin)
         except ConnectionError as e:
-            module.fail_json(msg=to_native(e))
+            module.fail_json(msg=f"{e}")
 
 
 def drop_user(module, client, user_name):
@@ -177,34 +189,30 @@ def set_user_grants(module, client, user_name, grants):
     try:
         current_grants = client.get_list_privileges(user_name)
     except influx.exceptions.InfluxDBClientError as e:
-        if not module.check_mode or 'user not found' not in e.content:
+        if not module.check_mode or "user not found" not in e.content:
             module.fail_json(msg=e.content)
 
     try:
         parsed_grants = []
         # Fix privileges wording
-        for i, v in enumerate(current_grants):
-            if v['privilege'] != 'NO PRIVILEGES':
-                if v['privilege'] == 'ALL PRIVILEGES':
-                    v['privilege'] = 'ALL'
+        for v in current_grants:
+            if v["privilege"] != "NO PRIVILEGES":
+                if v["privilege"] == "ALL PRIVILEGES":
+                    v["privilege"] = "ALL"
                 parsed_grants.append(v)
 
         # check if the current grants are included in the desired ones
         for current_grant in parsed_grants:
             if current_grant not in grants:
                 if not module.check_mode:
-                    client.revoke_privilege(current_grant['privilege'],
-                                            current_grant['database'],
-                                            user_name)
+                    client.revoke_privilege(current_grant["privilege"], current_grant["database"], user_name)
                 changed = True
 
         # check if the desired grants are included in the current ones
         for grant in grants:
             if grant not in parsed_grants:
                 if not module.check_mode:
-                    client.grant_privilege(grant['privilege'],
-                                           grant['database'],
-                                           user_name)
+                    client.grant_privilege(grant["privilege"], grant["database"], user_name)
                 changed = True
 
     except influx.exceptions.InfluxDBClientError as e:
@@ -219,22 +227,21 @@ INFLUX_AUTH_FIRST_USER_REQUIRED = "error authorizing query: create admin user fi
 def main():
     argument_spec = influx.InfluxDb.influxdb_argument_spec()
     argument_spec.update(
-        state=dict(default='present', type='str', choices=['present', 'absent']),
-        user_name=dict(required=True, type='str'),
-        user_password=dict(required=False, type='str', no_log=True),
-        admin=dict(default='False', type='bool'),
-        grants=dict(type='list', elements='dict'),
+        state=dict(default="present", type="str", choices=["present", "absent"]),
+        user_name=dict(required=True, type="str"),
+        user_password=dict(type="str", no_log=True),
+        force_password_update=dict(default=False, type="bool"),
+        admin=dict(default="False", type="bool"),
+        grants=dict(type="list", elements="dict"),
     )
-    module = AnsibleModule(
-        argument_spec=argument_spec,
-        supports_check_mode=True
-    )
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
-    state = module.params['state']
-    user_name = module.params['user_name']
-    user_password = module.params['user_password']
-    admin = module.params['admin']
-    grants = module.params['grants']
+    state = module.params["state"]
+    user_name = module.params["user_name"]
+    user_password = module.params["user_password"]
+    force_password_update = module.params["force_password_update"]
+    admin = module.params["admin"]
+    grants = module.params["grants"]
     influxdb = influx.InfluxDb(module)
     client = influxdb.connect_to_influxdb()
 
@@ -248,35 +255,37 @@ def main():
                 msg = json.loads(e.content)
                 reason = msg["error"]
             except (KeyError, ValueError):
-                module.fail_json(msg=to_native(e))
+                module.fail_json(msg=f"{e}")
 
             if reason != INFLUX_AUTH_FIRST_USER_REQUIRED:
-                module.fail_json(msg=to_native(e))
+                module.fail_json(msg=f"{e}")
         else:
-            module.fail_json(msg=to_native(e))
+            module.fail_json(msg=f"{e}")
 
     changed = False
 
-    if state == 'present':
+    if state == "present":
         if user:
-            if not check_user_password(module, client, user_name, user_password) and user_password is not None:
+            if user_password is not None and (
+                force_password_update or not check_user_password(module, client, user_name, user_password)
+            ):
                 set_user_password(module, client, user_name, user_password)
                 changed = True
 
             try:
-                if admin and not user['admin']:
+                if admin and not user["admin"]:
                     if not module.check_mode:
                         client.grant_admin_privileges(user_name)
                     changed = True
-                elif not admin and user['admin']:
+                elif not admin and user["admin"]:
                     if not module.check_mode:
                         client.revoke_admin_privileges(user_name)
                     changed = True
             except influx.exceptions.InfluxDBClientError as e:
-                module.fail_json(msg=to_native(e))
+                module.fail_json(msg=f"{e}")
 
         else:
-            user_password = user_password or ''
+            user_password = user_password or ""
             create_user(module, client, user_name, user_password, admin)
             changed = True
 
@@ -286,12 +295,12 @@ def main():
 
         module.exit_json(changed=changed)
 
-    if state == 'absent':
+    if state == "absent":
         if user:
             drop_user(module, client, user_name)
         else:
             module.exit_json(changed=False)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

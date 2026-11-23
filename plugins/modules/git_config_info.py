@@ -1,17 +1,13 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 
 # Copyright (c) 2023, Guenther Grill <grill.guenther@gmail.com>
 #
 # GNU General Public License v3.0+ (see LICENSES/GPL-3.0-or-later.txt or https://www.gnu.org/licenses/gpl-3.0.txt)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
-
-DOCUMENTATION = '''
----
+DOCUMENTATION = r"""
 module: git_config_info
 author:
   - Guenther Grill (@guenhter)
@@ -19,16 +15,15 @@ version_added: 8.1.0
 requirements: ['git']
 short_description: Read git configuration
 description:
-  - The M(community.general.git_config_info) module reads the git configuration
-    by invoking C(git config).
+  - The M(community.general.git_config_info) module reads the git configuration by invoking C(git config).
 extends_documentation_fragment:
-  - community.general.attributes
-  - community.general.attributes.info_module
+  - community.general._attributes
+  - community.general._attributes.info_module
 options:
   name:
     description:
       - The name of the setting to read.
-      - If not provided, all settings will be returned as RV(config_values).
+      - If not provided, all settings are returned as RV(config_values).
     type: str
   path:
     description:
@@ -44,12 +39,12 @@ options:
       - If set to V(system), the system git config is used. O(path) is ignored.
       - If set to V(local), O(path) must be set to the repo to read from.
       - If set to V(file), O(path) must be set to the config file to read from.
-    choices: [ "global", "system", "local", "file" ]
+    choices: ["global", "system", "local", "file"]
     default: "system"
     type: str
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = r"""
 - name: Read a system wide config
   community.general.git_config_info:
     name: core.editor
@@ -81,14 +76,13 @@ EXAMPLES = '''
   community.general.git_config_info:
     scope: file
     path: /etc/gitconfig
-'''
+"""
 
-RETURN = '''
----
+RETURN = r"""
 config_value:
-  description: >
-    When O(name) is set, a string containing the value of the setting in name. If O(name) is not set, empty.
-    If a config key such as V(push.pushoption) has more then one entry, just the first one is returned here.
+  description: >-
+    When O(name) is set, a string containing the value of the setting in name. If O(name) is not set, empty. If a config key
+    such as V(push.pushoption) has more then one entry, just the first one is returned here.
   returned: success if O(name) is set
   type: str
   sample: "vim"
@@ -97,8 +91,8 @@ config_values:
   description:
     - This is a dictionary mapping a git configuration setting to a list of its values.
     - When O(name) is not set, all configuration settings are returned here.
-    - When O(name) is set, only the setting specified in O(name) is returned here.
-      If that setting is not set, the key will still be present, and its value will be an empty list.
+    - When O(name) is set, only the setting specified in O(name) is returned here. If that setting is not set, the key is
+      still present, and its value is an empty list.
   returned: success
   type: dict
   sample:
@@ -106,7 +100,7 @@ config_values:
     color.ui: ["auto"]
     push.pushoption: ["merge_request.create", "merge_request.draft"]
     alias.remotev: ["remote -v"]
-'''
+"""
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -116,7 +110,7 @@ def main():
         argument_spec=dict(
             name=dict(type="str"),
             path=dict(type="path"),
-            scope=dict(required=False, type="str", default="system", choices=["global", "system", "local", "file"]),
+            scope=dict(type="str", default="system", choices=["global", "system", "local", "file"]),
         ),
         required_if=[
             ("scope", "local", ["path"]),
@@ -128,7 +122,7 @@ def main():
 
     # We check error message for a pattern, so we need to make sure the messages appear in the form we're expecting.
     # Set the locale to C to ensure consistent messages.
-    module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
+    module.run_command_environ_update = dict(LANGUAGE="C", LC_ALL="C")
 
     name = module.params["name"]
     path = module.params["path"]
@@ -146,7 +140,9 @@ def main():
         # If the return code is 1, it just means the option hasn't been set yet, which is fine.
         module.fail_json(rc=rc, msg=err, cmd=" ".join(args))
 
-    output_lines = out.strip("\0").split("\0") if out else []
+    output_lines = out.split("\0")
+    if output_lines[-1] == "":
+        output_lines = output_lines[:-1]
 
     if name:
         first_value = output_lines[0] if output_lines else ""
@@ -159,7 +155,7 @@ def main():
 
 def build_args(module, name, path, scope):
     git_path = module.get_bin_path("git", True)
-    args = [git_path, "config", "--includes", "--null", "--" + scope]
+    args = [git_path, "config", "--includes", "--null", f"--{scope}"]
 
     if scope == "file":
         args.append(path)

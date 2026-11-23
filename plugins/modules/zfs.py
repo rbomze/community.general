@@ -1,31 +1,25 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 
 # Copyright (c) 2013, Johan Wiren <johan.wiren.se@gmail.com>
 # Copyright (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see LICENSES/GPL-3.0-or-later.txt or https://www.gnu.org/licenses/gpl-3.0.txt)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
-DOCUMENTATION = '''
----
+DOCUMENTATION = r"""
 module: zfs
-short_description: Manage zfs
+short_description: Manage ZFS
 description:
-  - Manages ZFS file systems, volumes, clones and snapshots
+  - Manages ZFS file systems, volumes, clones and snapshots.
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: partial
     details:
-      - In certain situations it may report a task as changed that will not be reported
-        as changed when C(check_mode) is disabled.
-      - For example, this might occur when the zpool C(altroot) option is set or when
-        a size is written using human-readable notation, such as V(1M) or V(1024K),
-        instead of as an unqualified byte count, such as V(1048576).
+      - In certain situations it may report a task as changed that is not reported as changed when C(check_mode) is disabled.
+      - For example, this might occur when the zpool C(altroot) option is set.
   diff_mode:
     support: full
 options:
@@ -36,10 +30,9 @@ options:
     type: str
   state:
     description:
-      - Whether to create (V(present)), or remove (V(absent)) a
-        file system, snapshot or volume. All parents/children
-        will be created/destroyed as needed to reach the desired state.
-    choices: [ absent, present ]
+      - Whether to create (V(present)), or remove (V(absent)) a file system, snapshot or volume. All parents/children are
+        created/destroyed as needed to reach the desired state.
+    choices: [absent, present]
     required: true
     type: str
   origin:
@@ -50,13 +43,30 @@ options:
     description:
       - A dictionary of zfs properties to be set.
       - See the zfs(8) man page for more information.
+      - Properties that can only be set when the dataset is created (V(casesensitivity), V(encryption), V(keyformat),
+        V(normalization), V(pbkdf2iters), V(utf8only), V(volblocksize)) are not changed if the dataset already exists.
+        See O(create_only_mismatch) for what happens if their current value differs from the requested one.
+      - Values of size properties (V(quota), V(recordsize), V(refquota), V(refreservation), V(reservation),
+        V(special_small_blocks), V(volblocksize), V(volsize)) written in human-readable notation, such as V(4k)
+        or V(1.5G), are compared to the current value as byte counts.
     type: dict
     default: {}
+  create_only_mismatch:
+    description:
+      - What to do when the dataset already exists and the current value of a property that can only be set at creation
+        time differs from the one requested in O(extra_zfs_properties).
+    type: str
+    choices:
+      fail: Make the module fail.
+      warn: Issue a warning and leave the property unchanged.
+      ignore: Silently leave the property unchanged.
+    default: fail
+    version_added: 14.0.0
 author:
-- Johan Wiren (@johanwiren)
-'''
+  - Johan Wiren (@johanwiren)
+"""
 
-EXAMPLES = '''
+EXAMPLES = r"""
 - name: Create a new file system called myfs in pool rpool with the setuid property turned off
   community.general.zfs:
     name: rpool/myfs
@@ -93,43 +103,82 @@ EXAMPLES = '''
   community.general.zfs:
     name: rpool/myfs
     state: absent
-'''
+"""
 
 import os
+import re
+from decimal import Decimal
 
 from ansible.module_utils.basic import AnsibleModule
 
+# properties that cannot be changed with "zfs set" once the dataset exists
+CREATE_ONLY_PROPERTIES = frozenset(
+    (
+        "casesensitivity",
+        "encryption",
+        "keyformat",
+        "normalization",
+        "pbkdf2iters",
+        "utf8only",
+        "volblocksize",
+    )
+)
 
-class Zfs(object):
+SIZE_PROPERTIES = frozenset(
+    (
+        "quota",
+        "recordsize",
+        "refquota",
+        "refreservation",
+        "reservation",
+        "special_small_blocks",
+        "volblocksize",
+        "volsize",
+    )
+)
+SIZE_SUFFIXES = "BKMGTPEZ"
+SIZE_RE = re.compile(r"(?P<number>\d+(?:\.\d+)?)(?:(?P<suffix>[KMGTPEZ])(?:i?B)?|B)?", re.IGNORECASE)
 
-    def __init__(self, module, name, properties):
+
+# convert human-readable sizes, such as 4k or 1.5G, to the byte count reported by "zfs get -p"
+def normalize_value(prop, value):
+    if value is None or prop not in SIZE_PROPERTIES:
+        return value
+    match = SIZE_RE.fullmatch(str(value))
+    if not match:
+        return value
+    suffix = (match.group("suffix") or "B").upper()
+    multiplier = 1024 ** SIZE_SUFFIXES.index(suffix)
+    return str(int(Decimal(match.group("number")) * multiplier))
+
+
+class Zfs:
+    def __init__(self, module, name, extra_zfs_properties):
         self.module = module
         self.name = name
-        self.properties = properties
+        self.extra_zfs_properties = extra_zfs_properties
         self.changed = False
-        self.zfs_cmd = module.get_bin_path('zfs', True)
-        self.zpool_cmd = module.get_bin_path('zpool', True)
-        self.pool = name.split('/')[0].split('@')[0]
-        self.is_solaris = os.uname()[0] == 'SunOS'
+        self.zfs_cmd = module.get_bin_path("zfs", True)
+        self.zpool_cmd = module.get_bin_path("zpool", True)
+        self.pool = name.split("/")[0].split("@")[0]
+        self.is_solaris = os.uname()[0] == "SunOS"
         self.is_openzfs = self.check_openzfs()
         self.enhanced_sharing = self.check_enhanced_sharing()
 
     def check_openzfs(self):
         cmd = [self.zpool_cmd]
-        cmd.extend(['get', 'version'])
+        cmd.extend(["get", "version"])
         cmd.append(self.pool)
         (rc, out, err) = self.module.run_command(cmd, check_rc=True)
         version = out.splitlines()[-1].split()[2]
-        if version == '-':
+        if version == "-":
             return True
-        if int(version) == 5000:
-            return True
-        return False
+        return int(version) == 5000
 
     def check_enhanced_sharing(self):
         if self.is_solaris and not self.is_openzfs:
             cmd = [self.zpool_cmd]
-            cmd.extend(['get', 'version'])
+            cmd.extend(["get", "version"])
             cmd.append(self.pool)
             (rc, out, err) = self.module.run_command(cmd, check_rc=True)
             version = out.splitlines()[-1].split()[2]
@@ -138,7 +187,7 @@ class Zfs(object):
         return False
 
     def exists(self):
-        cmd = [self.zfs_cmd, 'list', '-t', 'all', self.name]
+        cmd = [self.zfs_cmd, "list", "-t", "all", self.name]
         rc, dummy, dummy = self.module.run_command(cmd)
         return rc == 0
 
@@ -146,31 +195,31 @@ class Zfs(object):
         if self.module.check_mode:
             self.changed = True
             return
-        properties = self.properties
-        origin = self.module.params.get('origin')
+        extra_zfs_properties = self.extra_zfs_properties
+        origin = self.module.params["origin"]
         cmd = [self.zfs_cmd]
 
         if "@" in self.name:
-            action = 'snapshot'
+            action = "snapshot"
         elif origin:
-            action = 'clone'
+            action = "clone"
         else:
-            action = 'create'
+            action = "create"
 
         cmd.append(action)
 
-        if action in ['create', 'clone']:
-            cmd += ['-p']
+        if action in ["create", "clone"]:
+            cmd += ["-p"]
 
-        if properties:
-            for prop, value in properties.items():
-                if prop == 'volsize':
-                    cmd += ['-V', value]
-                elif prop == 'volblocksize':
-                    cmd += ['-b', value]
+        if extra_zfs_properties:
+            for prop, value in extra_zfs_properties.items():
+                if prop == "volsize":
+                    cmd += ["-V", value]
+                elif prop == "volblocksize":
+                    cmd += ["-b", value]
                 else:
-                    cmd += ['-o', '%s=%s' % (prop, value)]
-        if origin and action == 'clone':
+                    cmd += ["-o", f"{prop}={value}"]
+        if origin and action == "clone":
             cmd.append(origin)
         cmd.append(self.name)
         self.module.run_command(cmd, check_rc=True)
@@ -180,7 +229,7 @@ class Zfs(object):
         if self.module.check_mode:
             self.changed = True
             return
-        cmd = [self.zfs_cmd, 'destroy', '-R', self.name]
+        cmd = [self.zfs_cmd, "destroy", "-R", self.name]
         self.module.run_command(cmd, check_rc=True)
         self.changed = True
 
@@ -188,108 +237,148 @@ class Zfs(object):
         if self.module.check_mode:
             self.changed = True
             return
-        cmd = [self.zfs_cmd, 'set', prop + '=' + str(value), self.name]
+        cmd = [self.zfs_cmd, "set", f"{prop}={value!s}", self.name]
         self.module.run_command(cmd, check_rc=True)
 
+    def handle_create_only_mismatch(self, prop, current_value, value):
+        mode = self.module.params["create_only_mismatch"]
+        if mode == "ignore":
+            return
+        msg = (
+            f"Property {prop} can only be set when the dataset is created, "
+            f"current value {current_value!r} differs from requested value {value!r}"
+        )
+        if mode == "fail":
+            self.module.fail_json(msg=msg)
+        self.module.warn(msg)
+
     def set_properties_if_changed(self):
-        diff = {'before': {'extra_zfs_properties': {}}, 'after': {'extra_zfs_properties': {}}}
-        current_properties = self.get_current_properties()
-        for prop, value in self.properties.items():
-            current_value = current_properties.get(prop, None)
-            if current_value != value:
+        diff = {"before": {"extra_zfs_properties": {}}, "after": {"extra_zfs_properties": {}}}
+        current_properties = self.list_properties()
+        previous_values = {}
+        settable_properties = {}
+        for prop, value in self.extra_zfs_properties.items():
+            if prop not in CREATE_ONLY_PROPERTIES:
+                settable_properties[prop] = value
+                continue
+            current_value = self.get_property(prop, current_properties)
+            if normalize_value(prop, current_value) != normalize_value(prop, value):
+                self.handle_create_only_mismatch(prop, current_value, value)
+        for prop, value in settable_properties.items():
+            current_value = self.get_property(prop, current_properties)
+            if normalize_value(prop, current_value) != normalize_value(prop, value):
+                previous_values[prop] = current_value
                 self.set_property(prop, value)
-                diff['before']['extra_zfs_properties'][prop] = current_value
-                diff['after']['extra_zfs_properties'][prop] = value
+                diff["before"]["extra_zfs_properties"][prop] = current_value
+                diff["after"]["extra_zfs_properties"][prop] = value
         if self.module.check_mode:
             return diff
-        updated_properties = self.get_current_properties()
-        for prop in self.properties:
-            value = updated_properties.get(prop, None)
+        updated_properties = self.list_properties()
+        for prop in settable_properties:
+            value = self.get_property(prop, updated_properties)
             if value is None:
-                self.module.fail_json(msg="zfsprop was not present after being successfully set: %s" % prop)
-            if current_properties.get(prop, None) != value:
+                self.module.fail_json(msg=f"zfsprop was not present after being successfully set: {prop}")
+            if prop in previous_values and previous_values[prop] != value:
                 self.changed = True
-            if prop in diff['after']['extra_zfs_properties']:
-                diff['after']['extra_zfs_properties'][prop] = value
+            if prop in diff["after"]["extra_zfs_properties"]:
+                diff["after"]["extra_zfs_properties"][prop] = value
         return diff
 
-    def get_current_properties(self):
-        cmd = [self.zfs_cmd, 'get', '-H', '-p', '-o', "property,value,source"]
+    def list_properties(self):
+        cmd = [self.zfs_cmd, "get", "-H", "-p", "-o", "property,source"]
         if self.enhanced_sharing:
-            cmd += ['-e']
-        cmd += ['all', self.name]
+            cmd += ["-e"]
+        cmd += ["all", self.name]
         rc, out, err = self.module.run_command(cmd)
-        properties = dict()
+        properties = []
         for line in out.splitlines():
-            prop, value, source = line.split('\t')
+            prop, source = line.split("\t")
             # include source '-' so that creation-only properties are not removed
             # to avoids errors when the dataset already exists and the property is not changed
             # this scenario is most likely when the same playbook is run more than once
-            if source in ('local', 'received', '-'):
-                properties[prop] = value
+            if source in ("local", "received", "-"):
+                properties.append(prop)
+        return properties
+
+    def get_property(self, name, list_of_properties):
         # Add alias for enhanced sharing properties
         if self.enhanced_sharing:
-            properties['sharenfs'] = properties.get('share.nfs', None)
-            properties['sharesmb'] = properties.get('share.smb', None)
-        return properties
+            if name == "sharenfs":
+                name = "share.nfs"
+            elif name == "sharesmb":
+                name = "share.smb"
+        if name not in list_of_properties:
+            return None
+        cmd = [self.zfs_cmd, "get", "-H", "-p", "-o", "value"]
+        if self.enhanced_sharing:
+            cmd += ["-e"]
+        cmd += [name, self.name]
+        rc, out, err = self.module.run_command(cmd)
+        if rc != 0:
+            return None
+        #
+        # Strip last newline
+        #
+        return out[:-1]
 
 
 def main():
-
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(type='str', required=True),
-            state=dict(type='str', required=True, choices=['absent', 'present']),
-            origin=dict(type='str'),
-            extra_zfs_properties=dict(type='dict', default={}),
+            name=dict(type="str", required=True),
+            state=dict(type="str", required=True, choices=["absent", "present"]),
+            origin=dict(type="str"),
+            extra_zfs_properties=dict(type="dict", default={}),
+            create_only_mismatch=dict(type="str", choices=["fail", "warn", "ignore"], default="fail"),
         ),
         supports_check_mode=True,
     )
+    module.run_command_environ_update = {"LANGUAGE": "C", "LC_ALL": "C"}
 
-    state = module.params.get('state')
-    name = module.params.get('name')
+    state = module.params["state"]
+    name = module.params["name"]
 
-    if module.params.get('origin') and '@' in name:
-        module.fail_json(msg='cannot specify origin when operating on a snapshot')
+    if module.params["origin"] and "@" in name:
+        module.fail_json(msg="cannot specify origin when operating on a snapshot")
 
     # Reverse the boolification of zfs properties
-    for prop, value in module.params['extra_zfs_properties'].items():
+    for prop, value in module.params["extra_zfs_properties"].items():
         if isinstance(value, bool):
             if value is True:
-                module.params['extra_zfs_properties'][prop] = 'on'
+                module.params["extra_zfs_properties"][prop] = "on"
             else:
-                module.params['extra_zfs_properties'][prop] = 'off'
+                module.params["extra_zfs_properties"][prop] = "off"
         else:
-            module.params['extra_zfs_properties'][prop] = value
+            module.params["extra_zfs_properties"][prop] = value
 
     result = dict(
         name=name,
         state=state,
     )
 
-    zfs = Zfs(module, name, module.params['extra_zfs_properties'])
+    zfs = Zfs(module, name, module.params["extra_zfs_properties"])
 
-    if state == 'present':
+    if state == "present":
         if zfs.exists():
-            result['diff'] = zfs.set_properties_if_changed()
+            result["diff"] = zfs.set_properties_if_changed()
         else:
             zfs.create()
-            result['diff'] = {'before': {'state': 'absent'}, 'after': {'state': state}}
+            result["diff"] = {"before": {"state": "absent"}, "after": {"state": state}}
 
-    elif state == 'absent':
+    elif state == "absent":
         if zfs.exists():
             zfs.destroy()
-            result['diff'] = {'before': {'state': 'present'}, 'after': {'state': state}}
+            result["diff"] = {"before": {"state": "present"}, "after": {"state": state}}
         else:
-            result['diff'] = {}
+            result["diff"] = {}
 
-    result['diff']['before_header'] = name
-    result['diff']['after_header'] = name
+    result["diff"]["before_header"] = name
+    result["diff"]["after_header"] = name
 
-    result.update(zfs.properties)
-    result['changed'] = zfs.changed
+    result.update(zfs.extra_zfs_properties)
+    result["changed"] = zfs.changed
     module.exit_json(**result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

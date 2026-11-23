@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 
 # Copyright (c) 2013, Matthias Vogelgesang <matthias.vogelgesang@gmail.com>
 # Copyright (c) 2014, Justin Lecher <jlec@gentoo.org>
@@ -7,110 +6,123 @@
 # GNU General Public License v3.0+ (see LICENSES/GPL-3.0-or-later.txt or https://www.gnu.org/licenses/gpl-3.0.txt)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
-
-DOCUMENTATION = '''
----
+DOCUMENTATION = r"""
 module: zypper_repository
 author: "Matthias Vogelgesang (@matze)"
 short_description: Add and remove Zypper repositories
 description:
-    - Add or remove Zypper repositories on SUSE and openSUSE
+  - Add or remove Zypper repositories on SUSE and openSUSE.
 extends_documentation_fragment:
-    - community.general.attributes
+  - community.general._attributes
 attributes:
-    check_mode:
-        support: none
-    diff_mode:
-        support: none
+  check_mode:
+    support: none
+  diff_mode:
+    support: none
 options:
-    name:
-        description:
-            - A name for the repository. Not required when adding repofiles.
-        type: str
-    repo:
-        description:
-            - URI of the repository or .repo file. Required when state=present.
-        type: str
-    state:
-        description:
-            - A source string state.
-        choices: [ "absent", "present" ]
-        default: "present"
-        type: str
+  name:
     description:
-        description:
-            - A description of the repository
-        type: str
-    disable_gpg_check:
-        description:
-            - Whether to disable GPG signature checking of
-              all packages. Has an effect only if O(state=present).
-            - Needs zypper version >= 1.6.2.
-        type: bool
-        default: false
-    autorefresh:
-        description:
-            - Enable autorefresh of the repository.
-        type: bool
-        default: true
-        aliases: [ "refresh" ]
-    priority:
-        description:
-            - Set priority of repository. Packages will always be installed
-              from the repository with the smallest priority number.
-            - Needs zypper version >= 1.12.25.
-        type: int
-    overwrite_multiple:
-        description:
-            - Overwrite multiple repository entries, if repositories with both name and
-              URL already exist.
-        type: bool
-        default: false
-    auto_import_keys:
-        description:
-            - Automatically import the gpg signing key of the new or changed repository.
-            - Has an effect only if O(state=present). Has no effect on existing (unchanged) repositories or in combination with O(state=absent).
-            - Implies runrefresh.
-            - Only works with C(.repo) files if `name` is given explicitly.
-        type: bool
-        default: false
-    runrefresh:
-        description:
-            - Refresh the package list of the given repository.
-            - Can be used with repo=* to refresh all repositories.
-        type: bool
-        default: false
-    enabled:
-        description:
-            - Set repository to enabled (or disabled).
-        type: bool
-        default: true
+      - The alias of the repository.
+      - Required when adding a repository by URI. Cannot be used with a C(.repo) file, the alias is taken from the file.
+      - To set the name zypper displays for the repository, use O(description).
+    type: str
+  repo:
+    description:
+      - URI of the repository or full path of a C(.repo) file. Required when O(state=present).
+    type: str
+  state:
+    description:
+      - Whether the repository should exist or not.
+      - A source string state.
+    choices: ["absent", "present"]
+    default: "present"
+    type: str
+  description:
+    description:
+      - A description of the repository, passed to zypper as its name.
+      - When not specified, the value from the C(.repo) file is used if available.
+    type: str
+  disable_gpg_check:
+    description:
+      - Whether to disable GPG signature checking of all packages. Has an effect only if O(state=present).
+      - Needs C(zypper) version >= 1.6.2.
+      - When not specified, the value from the C(.repo) file is used if available, otherwise it defaults to V(false).
+    type: bool
+  allow_unsigned_metadata:
+    description:
+      - Whether to accept unsigned repository metadata while still checking package signatures.
+      - Adds C(--gpgcheck-allow-unsigned-repo) to C(zypper addrepo); requires zypper 1.13.32 or later.
+      - Cannot be combined with O(disable_gpg_check=true) or with C(gpgcheck=0) in a C(.repo) file.
+    type: bool
+    version_added: 14.0.0
+  remove_others:
+    description:
+      - Remove every repository other than the one in O(repo) and the ones that belong to a service,
+        as the service would add them again on its next refresh.
+      - Requires O(state=present).
+    type: bool
+    default: false
+    version_added: 14.1.0
+  autorefresh:
+    description:
+      - Enable autorefresh of the repository.
+      - When not specified, the value from the C(.repo) file is used if available, otherwise it defaults to V(true).
+    type: bool
+    aliases: ["refresh"]
+  priority:
+    description:
+      - Set priority of repository. Packages are always installed from the repository with the smallest priority number.
+      - Needs C(zypper) version >= 1.12.25.
+    type: int
+  overwrite_multiple:
+    description:
+      - Overwrite multiple repository entries, if repositories with both name and URL already exist.
+    type: bool
+    default: false
+  auto_import_keys:
+    description:
+      - Automatically import the gpg signing key of the new or changed repository.
+      - Has an effect only if O(state=present). Has no effect on existing (unchanged) repositories or in combination with
+        O(state=absent).
+      - Implies O(runrefresh).
+    type: bool
+    default: false
+  runrefresh:
+    description:
+      - Refresh the package list of the given repository.
+      - Can be used with O(repo=*) to refresh all repositories.
+    type: bool
+    default: false
+  enabled:
+    description:
+      - Set repository to enabled (or disabled).
+      - When not specified, the value from the C(.repo) file is used if available, otherwise it defaults to V(true).
+    type: bool
 
 
 requirements:
-    - "zypper >= 1.0  # included in openSUSE >= 11.1 or SUSE Linux Enterprise Server/Desktop >= 11.0"
-    - python-xml
-'''
+  - "zypper >= 1.0  # included in openSUSE >= 11.1 or SUSE Linux Enterprise Server/Desktop >= 11.0"
+  - python-xml
+"""
 
-EXAMPLES = '''
+EXAMPLES = r"""
 - name: Add NVIDIA repository for graphics drivers
   community.general.zypper_repository:
     name: nvidia-repo
-    repo: 'ftp://download.nvidia.com/opensuse/12.2'
+    repo: 'https://download.nvidia.com/opensuse/leap/16.1'
     state: present
 
 - name: Remove NVIDIA repository
   community.general.zypper_repository:
     name: nvidia-repo
-    repo: 'ftp://download.nvidia.com/opensuse/12.2'
+    repo: 'https://download.nvidia.com/opensuse/leap/16.1'
     state: absent
 
 - name: Add python development repository
   community.general.zypper_repository:
-    repo: 'http://download.opensuse.org/repositories/devel:/languages:/python/SLE_11_SP3/devel:languages:python.repo'
+    repo: 'https://download.opensuse.org/repositories/devel:/languages:/python/16.1/devel:languages:python.repo'
 
 - name: Refresh all repos
   community.general.zypper_repository:
@@ -119,7 +131,8 @@ EXAMPLES = '''
 
 - name: Add a repo and add its gpg key
   community.general.zypper_repository:
-    repo: 'http://download.opensuse.org/repositories/systemsmanagement/openSUSE_Leap_42.1/'
+    repo: 'https://download.opensuse.org/repositories/systemsmanagement/16.1/'
+    name: systemsmanagement
     auto_import_keys: true
 
 - name: Force refresh of a repository
@@ -128,33 +141,54 @@ EXAMPLES = '''
     name: my_ci_repo
     state: present
     runrefresh: true
-'''
 
+- name: Keep only one repository
+  community.general.zypper_repository:
+    repo: 'http://my_internal_ci_repo/repo'
+    name: my_ci_repo
+    state: present
+    remove_others: true
+"""
+
+RETURN = r"""
+removed_repos:
+  description: Aliases of the repositories removed by O(remove_others).
+  type: list
+  elements: str
+  returned: when O(remove_others=true) and the task changed something
+  version_added: 14.1.0
+"""
+
+import configparser
 import traceback
 
 XML_IMP_ERR = None
 try:
     from xml.dom.minidom import parseString as parseXML
+    from xml.parsers.expat import ExpatError
+
     HAS_XML = True
 except ImportError:
     XML_IMP_ERR = traceback.format_exc()
     HAS_XML = False
 
+from io import StringIO
+
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-
-from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.common.text.converters import to_text
-from ansible.module_utils.six.moves import configparser, StringIO
-from io import open
+from ansible.module_utils.urls import fetch_url
 
-from ansible_collections.community.general.plugins.module_utils.version import LooseVersion
+from ansible_collections.community.general.plugins.module_utils._version import LooseVersion
 
-REPO_OPTS = ['alias', 'name', 'priority', 'enabled', 'autorefresh', 'gpgcheck']
+# zypper substitutes $releasever with /product/version from this file
+BASEPRODUCT_FILE = "/etc/products.d/baseproduct"
+
+REPO_OPTS = ["alias", "name", "priority", "enabled", "autorefresh", "gpgcheck", "raw_repo_gpgcheck"]
 
 
 def _get_cmd(module, *args):
     """Combines the non-interactive zypper command with arguments/subcommands"""
-    cmd = [module.get_bin_path('zypper', required=True), '--quiet', '--non-interactive']
+    cmd = [module.get_bin_path("zypper", required=True), "--quiet", "--non-interactive"]
     cmd.extend(args)
 
     return cmd
@@ -162,7 +196,7 @@ def _get_cmd(module, *args):
 
 def _parse_repos(module):
     """parses the output of zypper --xmlout repos and return a parse repo dictionary"""
-    cmd = _get_cmd(module, '--xmlout', 'repos')
+    cmd = _get_cmd(module, "--xmlout", "repos")
 
     if not HAS_XML:
         module.fail_json(msg=missing_required_lib("python-xml"), exception=XML_IMP_ERR)
@@ -170,12 +204,15 @@ def _parse_repos(module):
     if rc == 0:
         repos = []
         dom = parseXML(stdout)
-        repo_list = dom.getElementsByTagName('repo')
+        repo_list = dom.getElementsByTagName("repo")
         for repo in repo_list:
             opts = {}
             for o in REPO_OPTS:
                 opts[o] = repo.getAttribute(o)
-            opts['url'] = repo.getElementsByTagName('url')[0].firstChild.data
+            try:
+                opts["url"] = repo.getElementsByTagName("url")[0].firstChild.data
+            except IndexError:
+                opts["url"] = repo.getAttribute("metalink")
             # A repo can be uniquely identified by an alias + url
             repos.append(opts)
         return repos
@@ -183,11 +220,47 @@ def _parse_repos(module):
     elif rc == 6:
         return []
     else:
-        module.fail_json(msg='Failed to execute "%s"' % " ".join(cmd), rc=rc, stdout=stdout, stderr=stderr)
+        module.fail_json(msg=f'Failed to execute "{" ".join(cmd)}"', rc=rc, stdout=stdout, stderr=stderr)
+
+
+def get_releasever(module):
+    """Return the value zypper substitutes for $releasever."""
+    try:
+        with open(BASEPRODUCT_FILE, "rb") as f:
+            product = parseXML(f.read()).documentElement
+        for node in product.childNodes:
+            if node.nodeName == "version" and node.firstChild:
+                return node.firstChild.data.strip()
+    except (OSError, ExpatError):
+        pass
+    cmd = ["rpm", "-q", "--qf", "%{version}", "-f", "/etc/os-release"]
+    rc, stdout, stderr = module.run_command(cmd, check_rc=True)
+    return stdout
+
+
+def get_service_repo_aliases(module):
+    "Aliases of repositories that are managed by a service (zypper services --with-repos)."
+    cmd = _get_cmd(module, "--xmlout", "services", "--with-repos")
+    rc, stdout, stderr = module.run_command(cmd, check_rc=True)
+    try:
+        dom = parseXML(stdout)
+    except ExpatError as exc:
+        module.fail_json(msg=f"Failed to parse zypper xml output: {exc}", cmd=cmd, stdout=stdout, stderr=stderr)
+    # standalone repositories are listed too, only those nested in a <service> belong to one
+    return {
+        repo.getAttribute("alias")
+        for service in dom.getElementsByTagName("service")
+        for repo in service.getElementsByTagName("repo")
+    }
 
 
 def _repo_changes(module, realrepo, repocmp):
     "Check whether the 2 given repos have different settings."
+    if "allow_unsigned_metadata" in repocmp:
+        # zypper lr -x reports the explicit setting as raw_repo_gpgcheck="0"; it is absent otherwise
+        if (realrepo.get("raw_repo_gpgcheck") == "0") != repocmp["allow_unsigned_metadata"]:
+            return True
+        repocmp = {k: v for k, v in repocmp.items() if k != "allow_unsigned_metadata"}
     for k in repocmp:
         if repocmp[k] and k not in realrepo:
             return True
@@ -197,16 +270,15 @@ def _repo_changes(module, realrepo, repocmp):
             valold = str(repocmp[k] or "")
             valnew = v or ""
             if k == "url":
-                if '$releasever' in valold or '$releasever' in valnew:
-                    cmd = ['rpm', '-q', '--qf', '%{version}', '-f', '/etc/os-release']
+                if "$releasever" in valold or "$releasever" in valnew:
+                    releasever = get_releasever(module)
+                    valnew = valnew.replace("$releasever", releasever)
+                    valold = valold.replace("$releasever", releasever)
+                if "$basearch" in valold or "$basearch" in valnew:
+                    cmd = ["rpm", "-q", "--qf", "%{arch}", "-f", "/etc/os-release"]
                     rc, stdout, stderr = module.run_command(cmd, check_rc=True)
-                    valnew = valnew.replace('$releasever', stdout)
-                    valold = valold.replace('$releasever', stdout)
-                if '$basearch' in valold or '$basearch' in valnew:
-                    cmd = ['rpm', '-q', '--qf', '%{arch}', '-f', '/etc/os-release']
-                    rc, stdout, stderr = module.run_command(cmd, check_rc=True)
-                    valnew = valnew.replace('$basearch', stdout)
-                    valold = valold.replace('$basearch', stdout)
+                    valnew = valnew.replace("$basearch", stdout)
+                    valold = valold.replace("$basearch", stdout)
                 valold, valnew = valold.rstrip("/"), valnew.rstrip("/")
             if valold != valnew:
                 return True
@@ -216,16 +288,16 @@ def _repo_changes(module, realrepo, repocmp):
 def repo_exists(module, repodata, overwrite_multiple):
     """Check whether the repository already exists.
 
-        returns (exists, mod, old_repos)
-            exists: whether a matching (name, URL) repo exists
-            mod: whether there are changes compared to the existing repo
-            old_repos: list of matching repos
+    returns (exists, mod, old_repos)
+        exists: whether a matching (name, URL) repo exists
+        mod: whether there are changes compared to the existing repo
+        old_repos: list of matching repos
     """
     existing_repos = _parse_repos(module)
 
     # look for repos that have matching alias or url to the one searched
     repos = []
-    for kw in ['alias', 'url']:
+    for kw in ["alias", "url"]:
         name = repodata[kw]
         for oldr in existing_repos:
             if repodata[kw] == oldr[kw] and oldr not in repos:
@@ -243,51 +315,55 @@ def repo_exists(module, repodata, overwrite_multiple):
             # Found two repos and want to overwrite_multiple
             return (True, True, repos)
         else:
-            errmsg = 'More than one repo matched "%s": "%s".' % (name, repos)
-            errmsg += ' Use overwrite_multiple to allow more than one repo to be overwritten'
+            errmsg = f'More than one repo matched "{name}": "{repos}".'
+            errmsg += " Use overwrite_multiple to allow more than one repo to be overwritten"
             module.fail_json(msg=errmsg)
 
 
-def addmodify_repo(module, repodata, old_repos, zypper_version, warnings):
+def addmodify_repo(module, repodata, old_repos, zypper_version):
     "Adds the repo, removes old repos before, that would conflict."
-    repo = repodata['url']
-    cmd = _get_cmd(module, 'addrepo', '--check')
-    if repodata['name']:
-        cmd.extend(['--name', repodata['name']])
+    repo = repodata["url"]
+    cmd = _get_cmd(module, "addrepo", "--check")
+    if repodata["name"]:
+        cmd.extend(["--name", repodata["name"]])
 
     # priority on addrepo available since 1.12.25
     # https://github.com/openSUSE/zypper/blob/b9b3cb6db76c47dc4c47e26f6a4d2d4a0d12b06d/package/zypper.changes#L327-L336
-    if repodata['priority']:
-        if zypper_version >= LooseVersion('1.12.25'):
-            cmd.extend(['--priority', str(repodata['priority'])])
+    if repodata["priority"]:
+        if zypper_version >= LooseVersion("1.12.25"):
+            cmd.extend(["--priority", str(repodata["priority"])])
         else:
-            warnings.append("Setting priority only available for zypper >= 1.12.25. Ignoring priority argument.")
+            module.warn("Setting priority only available for zypper >= 1.12.25. Ignoring priority argument.")
 
-    if repodata['enabled'] == '0':
-        cmd.append('--disable')
+    if repodata["enabled"] == "0":
+        cmd.append("--disable")
 
     # gpgcheck available since 1.6.2
     # https://github.com/openSUSE/zypper/blob/b9b3cb6db76c47dc4c47e26f6a4d2d4a0d12b06d/package/zypper.changes#L2446-L2449
     # the default changed in the past, so don't assume a default here and show warning for old zypper versions
-    if zypper_version >= LooseVersion('1.6.2'):
-        if repodata['gpgcheck'] == '1':
-            cmd.append('--gpgcheck')
+    if zypper_version >= LooseVersion("1.6.2"):
+        if repodata["gpgcheck"] != "1":
+            cmd.append("--no-gpgcheck")
+        elif repodata.get("allow_unsigned_metadata") and zypper_version >= LooseVersion("1.13.32"):
+            cmd.append("--gpgcheck-allow-unsigned-repo")
         else:
-            cmd.append('--no-gpgcheck')
+            if repodata.get("allow_unsigned_metadata"):
+                module.warn("allow_unsigned_metadata only available for zypper >= 1.13.32. Ignoring it.")
+            cmd.append("--gpgcheck")
     else:
-        warnings.append("Enabling/disabling gpgcheck only available for zypper >= 1.6.2. Using zypper default value.")
+        module.warn("Enabling/disabling gpgcheck only available for zypper >= 1.6.2. Using zypper default value.")
 
-    if repodata['autorefresh'] == '1':
-        cmd.append('--refresh')
+    if repodata["autorefresh"] == "1":
+        cmd.append("--refresh")
 
     cmd.append(repo)
 
-    if not repo.endswith('.repo'):
-        cmd.append(repodata['alias'])
+    if not repo.endswith(".repo"):
+        cmd.append(repodata["alias"])
 
     if old_repos is not None:
         for oldrepo in old_repos:
-            remove_repo(module, oldrepo['url'])
+            remove_repo(module, oldrepo["url"])
 
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
     return rc, stdout, stderr
@@ -295,27 +371,27 @@ def addmodify_repo(module, repodata, old_repos, zypper_version, warnings):
 
 def remove_repo(module, repo):
     "Removes the repo."
-    cmd = _get_cmd(module, 'removerepo', repo)
+    cmd = _get_cmd(module, "removerepo", repo)
 
     rc, stdout, stderr = module.run_command(cmd, check_rc=True)
     return rc, stdout, stderr
 
 
 def get_zypper_version(module):
-    rc, stdout, stderr = module.run_command([module.get_bin_path('zypper', required=True), '--version'])
-    if rc != 0 or not stdout.startswith('zypper '):
-        return LooseVersion('1.0')
+    rc, stdout, stderr = module.run_command([module.get_bin_path("zypper", required=True), "--version"])
+    if rc != 0 or not stdout.startswith("zypper "):
+        return LooseVersion("1.0")
     return LooseVersion(stdout.split()[1])
 
 
 def runrefreshrepo(module, auto_import_keys=False, shortname=None):
     "Forces zypper to refresh repo metadata."
     if auto_import_keys:
-        cmd = _get_cmd(module, '--gpg-auto-import-keys', 'refresh', '--force')
+        cmd = _get_cmd(module, "--gpg-auto-import-keys", "refresh", "--force")
     else:
-        cmd = _get_cmd(module, 'refresh', '--force')
+        cmd = _get_cmd(module, "refresh", "--force")
     if shortname is not None:
-        cmd.extend(['-r', shortname])
+        cmd.extend(["-r", shortname])
 
     rc, stdout, stderr = module.run_command(cmd, check_rc=True)
     return rc, stdout, stderr
@@ -324,124 +400,164 @@ def runrefreshrepo(module, auto_import_keys=False, shortname=None):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(required=False),
-            repo=dict(required=False),
-            state=dict(choices=['present', 'absent'], default='present'),
-            runrefresh=dict(required=False, default=False, type='bool'),
-            description=dict(required=False),
-            disable_gpg_check=dict(required=False, default=False, type='bool'),
-            autorefresh=dict(required=False, default=True, type='bool', aliases=['refresh']),
-            priority=dict(required=False, type='int'),
-            enabled=dict(required=False, default=True, type='bool'),
-            overwrite_multiple=dict(required=False, default=False, type='bool'),
-            auto_import_keys=dict(required=False, default=False, type='bool'),
+            name=dict(),
+            repo=dict(),
+            state=dict(choices=["present", "absent"], default="present"),
+            runrefresh=dict(default=False, type="bool"),
+            description=dict(),
+            disable_gpg_check=dict(type="bool"),
+            allow_unsigned_metadata=dict(type="bool"),
+            remove_others=dict(type="bool", default=False),
+            autorefresh=dict(type="bool", aliases=["refresh"]),
+            priority=dict(type="int"),
+            enabled=dict(type="bool"),
+            overwrite_multiple=dict(default=False, type="bool"),
+            auto_import_keys=dict(default=False, type="bool"),
         ),
         supports_check_mode=False,
-        required_one_of=[['state', 'runrefresh']],
+        required_one_of=[["state", "runrefresh"]],
     )
+    module.run_command_environ_update = {"LANGUAGE": "C", "LC_ALL": "C"}
 
-    repo = module.params['repo']
-    alias = module.params['name']
-    state = module.params['state']
-    overwrite_multiple = module.params['overwrite_multiple']
-    auto_import_keys = module.params['auto_import_keys']
-    runrefresh = module.params['runrefresh']
+    repo = module.params["repo"]
+    alias = module.params["name"]
+    state = module.params["state"]
+    overwrite_multiple = module.params["overwrite_multiple"]
+    auto_import_keys = module.params["auto_import_keys"]
+    runrefresh = module.params["runrefresh"]
+    remove_others = module.params["remove_others"]
+
+    if remove_others and state != "present":
+        module.fail_json(msg="remove_others=true cannot be combined with state=absent.")
 
     zypper_version = get_zypper_version(module)
-    warnings = []  # collect warning messages for final output
 
     repodata = {
-        'url': repo,
-        'alias': alias,
-        'name': module.params['description'],
-        'priority': module.params['priority'],
+        "url": repo,
+        "alias": alias,
+        "name": module.params["description"],
+        "priority": module.params["priority"],
     }
     # rewrite bools in the language that zypper lr -x provides for easier comparison
-    if module.params['enabled']:
-        repodata['enabled'] = '1'
-    else:
-        repodata['enabled'] = '0'
-    if module.params['disable_gpg_check']:
-        repodata['gpgcheck'] = '0'
-    else:
-        repodata['gpgcheck'] = '1'
-    if module.params['autorefresh']:
-        repodata['autorefresh'] = '1'
-    else:
-        repodata['autorefresh'] = '0'
+    # only set if the user explicitly provided the parameter (None means unset)
+    if module.params["enabled"] is not None:
+        repodata["enabled"] = "1" if module.params["enabled"] else "0"
+    if module.params["disable_gpg_check"] is not None:
+        repodata["gpgcheck"] = "0" if module.params["disable_gpg_check"] else "1"
+    if module.params["allow_unsigned_metadata"] is not None:
+        repodata["allow_unsigned_metadata"] = module.params["allow_unsigned_metadata"]
+    if module.params["autorefresh"] is not None:
+        repodata["autorefresh"] = "1" if module.params["autorefresh"] else "0"
 
     def exit_unchanged():
         module.exit_json(changed=False, repodata=repodata, state=state)
 
+    def remove_other_repos():
+        "Removes every repository except the one managed by this task; returns the removed aliases."
+        removed = []
+        keep = get_service_repo_aliases(module)
+        keep.add(repodata["alias"])
+        for other in _parse_repos(module):
+            if other["alias"] not in keep:
+                remove_repo(module, other["alias"])
+                removed.append(other["alias"])
+        return removed
+
     # Check run-time module parameters
-    if repo == '*' or alias == '*':
+    if repo == "*" or alias == "*":
         if runrefresh:
             runrefreshrepo(module, auto_import_keys)
             module.exit_json(changed=False, runrefresh=True)
         else:
-            module.fail_json(msg='repo=* can only be used with the runrefresh option.')
+            module.fail_json(msg="repo=* can only be used with the runrefresh option.")
 
-    if state == 'present' and not repo:
-        module.fail_json(msg='Module option state=present requires repo')
-    if state == 'absent' and not repo and not alias:
-        module.fail_json(msg='Alias or repo parameter required when state=absent')
+    if state == "present" and not repo:
+        module.fail_json(msg="Module option state=present requires repo")
+    if state == "absent" and not repo and not alias:
+        module.fail_json(msg="Alias or repo parameter required when state=absent")
 
-    if repo and repo.endswith('.repo'):
+    if repo and repo.endswith(".repo"):
         if alias:
-            module.fail_json(msg='Incompatible option: \'name\'. Do not use name when adding .repo files')
+            module.fail_json(msg="Incompatible option: 'name'. Do not use name when adding .repo files")
     else:
         if not alias and state == "present":
-            module.fail_json(msg='Name required when adding non-repo files.')
+            module.fail_json(msg="Name required when adding non-repo files.")
 
     # Download / Open and parse .repo file to ensure idempotency
-    if repo and repo.endswith('.repo'):
-        if repo.startswith(('http://', 'https://')):
+    if repo and repo.endswith(".repo"):
+        repofile_text = None
+        if repo.startswith(("http://", "https://")):
             response, info = fetch_url(module=module, url=repo, force=True)
-            if not response or info['status'] != 200:
-                module.fail_json(msg='Error downloading .repo file from provided URL')
-            repofile_text = to_text(response.read(), errors='surrogate_or_strict')
+            if not response or info["status"] != 200:
+                if state == "absent":
+                    # Fall back to alias derived from URL filename (convention: section == basename)
+                    module.warn(
+                        f"Could not download .repo file from '{repo}'; will try to identify repository by alias"
+                    )
+                    alias = alias or repo.rsplit("/", 1)[-1][:-5]
+                    repodata["alias"] = alias
+                else:
+                    module.fail_json(msg="Error downloading .repo file from provided URL")
+            else:
+                repofile_text = to_text(response.read(), errors="surrogate_or_strict")
         else:
             try:
-                with open(repo, encoding='utf-8') as file:
+                with open(repo, encoding="utf-8") as file:
                     repofile_text = file.read()
-            except IOError:
-                module.fail_json(msg='Error opening .repo file from provided path')
+            except OSError:
+                if state == "absent":
+                    module.warn(f"Could not open .repo file at '{repo}'; will try to identify repository by alias")
+                    alias = alias or repo.rsplit("/", 1)[-1][:-5]
+                    repodata["alias"] = alias
+                else:
+                    module.fail_json(msg="Error opening .repo file from provided path")
 
-        repofile = configparser.ConfigParser()
-        try:
-            repofile.readfp(StringIO(repofile_text))
-        except configparser.Error:
-            module.fail_json(msg='Invalid format, .repo file could not be parsed')
+        if repofile_text is not None:
+            repofile = configparser.ConfigParser()
+            try:
+                repofile.read_file(StringIO(repofile_text))
+            except configparser.Error:
+                module.fail_json(msg="Invalid format, .repo file could not be parsed")
 
-        # No support for .repo file with zero or more than one repository
-        if len(repofile.sections()) != 1:
-            err = "Invalid format, .repo file contains %s repositories, expected 1" % len(repofile.sections())
-            module.fail_json(msg=err)
+            # No support for .repo file with zero or more than one repository
+            if len(repofile.sections()) != 1:
+                err = f"Invalid format, .repo file contains {len(repofile.sections())} repositories, expected 1"
+                module.fail_json(msg=err)
 
-        section = repofile.sections()[0]
-        repofile_items = dict(repofile.items(section))
-        # Only proceed if at least baseurl is available
-        if 'baseurl' not in repofile_items:
-            module.fail_json(msg='No baseurl found in .repo file')
+            section = repofile.sections()[0]
+            repofile_items = dict(repofile.items(section))
+            # Only proceed if at least baseurl is available
+            if "baseurl" not in repofile_items:
+                module.fail_json(msg="No baseurl found in .repo file")
 
-        # Set alias (name) and url based on values from .repo file
-        alias = section
-        repodata['alias'] = section
-        repodata['url'] = repofile_items['baseurl']
+            # Set alias (name) and url based on values from .repo file
+            alias = section
+            repodata["alias"] = section
+            repodata["url"] = repofile_items["baseurl"]
 
-        # If gpgkey is part of the .repo file, auto import key
-        if 'gpgkey' in repofile_items:
-            auto_import_keys = True
+            # If gpgkey is part of the .repo file, auto import key
+            if "gpgkey" in repofile_items:
+                auto_import_keys = True
 
-        # Map additional values, if available
-        if 'name' in repofile_items:
-            repodata['name'] = repofile_items['name']
-        if 'enabled' in repofile_items:
-            repodata['enabled'] = repofile_items['enabled']
-        if 'autorefresh' in repofile_items:
-            repodata['autorefresh'] = repofile_items['autorefresh']
-        if 'gpgcheck' in repofile_items:
-            repodata['gpgcheck'] = repofile_items['gpgcheck']
+            # Map additional values, if available
+            if repodata["name"] is None and "name" in repofile_items:
+                repodata["name"] = repofile_items["name"]
+            # Use .repo file values only for settings the user did not explicitly provide
+            for key in ("enabled", "autorefresh", "gpgcheck"):
+                if key not in repodata and key in repofile_items:
+                    repodata[key] = repofile_items[key]
+            if "allow_unsigned_metadata" not in repodata and repofile_items.get("repo_gpgcheck") == "0":
+                repodata["allow_unsigned_metadata"] = True
+
+    # Apply defaults for any settings not provided by the user or the .repo file
+    repodata.setdefault("enabled", "1")
+    repodata.setdefault("gpgcheck", "1")
+    repodata.setdefault("autorefresh", "1")
+
+    if module.params["allow_unsigned_metadata"] and repodata["gpgcheck"] == "0":
+        module.fail_json(
+            msg="allow_unsigned_metadata=true cannot be combined with disabled GPG checking (disable_gpg_check=true or gpgcheck=0 in the .repo file)"
+        )
 
     exists, mod, old_repos = repo_exists(module, repodata, overwrite_multiple)
 
@@ -450,24 +566,32 @@ def main():
     else:
         shortname = repo
 
-    if state == 'present':
+    if state == "present":
         if exists and not mod:
             if runrefresh:
                 runrefreshrepo(module, auto_import_keys, shortname)
+            if remove_others:
+                removed = remove_other_repos()
+                if removed:
+                    module.exit_json(changed=True, repodata=repodata, state=state, removed_repos=removed)
             exit_unchanged()
-        rc, stdout, stderr = addmodify_repo(module, repodata, old_repos, zypper_version, warnings)
+        rc, stdout, stderr = addmodify_repo(module, repodata, old_repos, zypper_version)
         if rc == 0 and (runrefresh or auto_import_keys):
             runrefreshrepo(module, auto_import_keys, shortname)
-    elif state == 'absent':
+    elif state == "absent":
         if not exists:
             exit_unchanged()
         rc, stdout, stderr = remove_repo(module, shortname)
 
     if rc == 0:
-        module.exit_json(changed=True, repodata=repodata, state=state, warnings=warnings)
+        if state == "present" and remove_others:
+            module.exit_json(changed=True, repodata=repodata, state=state, removed_repos=remove_other_repos())
+        module.exit_json(changed=True, repodata=repodata, state=state)
     else:
-        module.fail_json(msg="Zypper failed with rc %s" % rc, rc=rc, stdout=stdout, stderr=stderr, repodata=repodata, state=state, warnings=warnings)
+        module.fail_json(
+            msg=f"Zypper failed with rc {rc}", rc=rc, stdout=stdout, stderr=stderr, repodata=repodata, state=state
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

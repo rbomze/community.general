@@ -5,76 +5,102 @@
 
 - name: "Match targeted filesystem by label"
   block:
-  - name: Match '{{ btrfs_subvolume_target_label }}' filesystem by label
-    community.general.btrfs_subvolume:
-      automount: Yes
-      name: "/match_label"
-      filesystem_label: "{{ btrfs_subvolume_target_label }}"
-      state: "present"
-    register: result
+    - name: Match '{{ btrfs_subvolume_target_label }}' filesystem by label
+      community.general.btrfs_subvolume:
+        automount: true
+        name: "/match_label"
+        filesystem_label: "{{ btrfs_subvolume_target_label }}"
+        state: "present"
+      register: result
 
-  - name: Validate the '{{ btrfs_subvolume_target_label }}' filesystem was chosen
-    ansible.builtin.assert:
-      that:
-        - result.filesystem.label == btrfs_subvolume_target_label
+    - name: Validate the '{{ btrfs_subvolume_target_label }}' filesystem was chosen
+      ansible.builtin.assert:
+        that:
+          - result.filesystem.label == btrfs_subvolume_target_label
 
 - name: "Match targeted filesystem by uuid"
   block:
-  - name: Match '{{ btrfs_subvolume_target_label }}' filesystem by uuid
-    community.general.btrfs_subvolume:
-      automount: Yes
-      name: "/match_uuid"
-      filesystem_uuid: "{{ result.filesystem.uuid }}"
-      state: "present"
-    register: result
+    - name: Match '{{ btrfs_subvolume_target_label }}' filesystem by uuid
+      community.general.btrfs_subvolume:
+        automount: true
+        name: "/match_uuid"
+        filesystem_uuid: "{{ result.filesystem.uuid }}"
+        state: "present"
+      register: result
 
-  - name: Validate the '{{ btrfs_subvolume_target_label }}' filesystem was chosen
-    ansible.builtin.assert:
-      that:
-        - result.filesystem.label == btrfs_subvolume_target_label
+    - name: Validate the '{{ btrfs_subvolume_target_label }}' filesystem was chosen
+      ansible.builtin.assert:
+        that:
+          - result.filesystem.label == btrfs_subvolume_target_label
 
 - name: "Match targeted filesystem by devices"
   block:
-  - name: Match '{{ btrfs_subvolume_target_label }}' filesystem by device
-    community.general.btrfs_subvolume:
-      automount: Yes
-      name: "/match_device"
-      filesystem_device: "{{ result.filesystem.devices | first }}"
-      state: "present"
-    register: result
+    - name: Match '{{ btrfs_subvolume_target_label }}' filesystem by device
+      community.general.btrfs_subvolume:
+        automount: true
+        name: "/match_device"
+        filesystem_device: "{{ result.filesystem.devices | first }}"
+        state: "present"
+      register: result
 
-  - name: Validate the '{{ btrfs_subvolume_target_label }}' filesystem was chosen
-    ansible.builtin.assert:
-      that:
-        - result.filesystem.label == btrfs_subvolume_target_label
+    - name: Validate the '{{ btrfs_subvolume_target_label }}' filesystem was chosen
+      ansible.builtin.assert:
+        that:
+          - result.filesystem.label == btrfs_subvolume_target_label
 
 - name: "Match only mounted filesystem"
   block:
-  - name: "Mount filesystem '{{ btrfs_subvolume_target_label }}'"
-    ansible.posix.mount:
-      src: "{{ result.filesystem.devices | first }}"
-      path: /mnt
-      opts: "subvolid={{ 5 }}"
-      fstype: btrfs
-      state: mounted
+    - name: "Mount filesystem '{{ btrfs_subvolume_target_label }}'"
+      ansible.posix.mount:
+        src: "{{ result.filesystem.devices | first }}"
+        path: /mnt
+        opts: "subvolid={{ 5 }}"
+        fstype: btrfs
+        state: mounted
 
-  - name: Print current status
-    community.general.btrfs_info:
+    - name: Print current status
+      community.general.btrfs_info:
 
-  - name: Match '{{ btrfs_subvolume_target_label }}' filesystem when only mount
-    community.general.btrfs_subvolume:
-      automount: Yes
-      name: "/match_only_mounted"
-      state: "present"
-    register: result
+    - name: Match '{{ btrfs_subvolume_target_label }}' filesystem when only mount
+      community.general.btrfs_subvolume:
+        automount: true
+        name: "/match_only_mounted"
+        state: "present"
+      register: result
 
-  - name: "Unmount filesystem '{{ btrfs_subvolume_target_label }}'"
-    ansible.posix.mount:
-      path: /mnt
-      state: absent
+    - name: "Unmount filesystem '{{ btrfs_subvolume_target_label }}'"
+      ansible.posix.mount:
+        path: /mnt
+        state: absent
 
-  - name: Validate the '{{ btrfs_subvolume_target_label }}' filesystem was chosen
-    ansible.builtin.assert:
-      that:
-        - result.filesystem.label == btrfs_subvolume_target_label
-  when: False  # TODO don't attempt this if the host already has a pre-existing btrfs filesystem
+    - name: Validate the '{{ btrfs_subvolume_target_label }}' filesystem was chosen
+      ansible.builtin.assert:
+        that:
+          - result.filesystem.label == btrfs_subvolume_target_label
+  when: false  # TODO don't attempt this if the host already has a pre-existing btrfs filesystem
+
+- name: "Report why the targeted filesystem cannot be used"
+  block:
+    - name: Match a filesystem by a label that does not exist
+      community.general.btrfs_subvolume:
+        name: "/match_missing_label"
+        filesystem_label: "{{ btrfs_subvolume_target_label }}-missing"
+        state: "present"
+      register: missing_label_result
+      ignore_errors: true
+
+    - name: Target the unmounted '{{ btrfs_subvolume_target_label }}' filesystem without automount
+      community.general.btrfs_subvolume:
+        name: "/match_without_automount"
+        filesystem_label: "{{ btrfs_subvolume_target_label }}"
+        state: "present"
+      register: no_automount_result
+      ignore_errors: true
+
+    - name: Validate the module's own error messages are reported
+      ansible.builtin.assert:
+        that:
+          - missing_label_result is failed
+          - "'Found 0 filesystems matching criteria' in missing_label_result.msg"
+          - no_automount_result is failed
+          - "'is not currently mounted and automount=False' in no_automount_result.msg"

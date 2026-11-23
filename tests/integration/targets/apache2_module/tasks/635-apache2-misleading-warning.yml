@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # This test represent the misleading behavior of the following issue: https://github.com/ansible-collections/community.general/issues/635
 - name: Disable MPM event module
-  apache2_module:
+  community.general.apache2_module:
     name: "{{ item.module}}"
     state: "{{ item.state}}"
     ignore_configcheck: true
@@ -13,16 +13,16 @@
     - { module: mpm_event, state: absent }
     - { module: mpm_prefork, state: present }
 
-- assert:
+- ansible.builtin.assert:
     that:
-    - "'warnings' in disable_mpm_modules"
-    - disable_mpm_modules["warnings"] == [
-      "No MPM module loaded! apache2 reload AND other module actions will fail if no MPM module is loaded immediately.",
-      "No MPM module loaded! apache2 reload AND other module actions will fail if no MPM module is loaded immediately."
-      ]
+      - "'warnings' in disable_mpm_modules"
+      - disable_mpm_modules["warnings"] == [
+        "No MPM module loaded! apache2 reload AND other module actions will fail if no MPM module is loaded immediately.",
+        "No MPM module loaded! apache2 reload AND other module actions will fail if no MPM module is loaded immediately."
+        ]
 
 - name: Enable MPM event module - Revert previous change
-  apache2_module:
+  community.general.apache2_module:
     name: "{{ item.module}}"
     state: "{{ item.state}}"
     ignore_configcheck: true
@@ -32,7 +32,7 @@
     - { module: mpm_event, state: present }
 
 - name: Disable MPM event module
-  apache2_module:
+  community.general.apache2_module:
     name: "{{ item.module}}"
     state: "{{ item.state}}"
     ignore_configcheck: true
@@ -42,6 +42,6 @@
     - { module: mpm_event, state: absent }
     - { module: mpm_prefork, state: present }
 
-- assert:
+- ansible.builtin.assert:
     that:
-    - "'warnings' not in disable_mpm_modules"
+      - "'warnings' not in disable_mpm_modules"

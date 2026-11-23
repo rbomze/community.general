@@ -5,7 +5,7 @@
 
 namespace: community
 name: general
-version: 8.4.0
+version: 14.1.0
 readme: README.md
 authors:
   - Ansible (https://github.com/ansible)
@@ -15,7 +15,11 @@ description: >-
 license_file: COPYING
 tags:
   - community
+dependencies:
+  community.library_inventory_filtering_v1: '>=1.0.0'
 repository: https://github.com/ansible-collections/community.general
-documentation: https://docs.ansible.com/ansible/latest/collections/community/general/
+documentation: https://docs.ansible.com/projects/ansible/latest/collections/community/general/
 homepage: https://github.com/ansible-collections/community.general
 issues: https://github.com/ansible-collections/community.general/issues
+build_ignore:
+  - .nox

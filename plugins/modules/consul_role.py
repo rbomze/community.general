@@ -1,36 +1,34 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 
 # Copyright (c) 2022, Håkon Lerring
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from __future__ import absolute_import, division, print_function
+from __future__ import annotations
 
-__metaclass__ = type
-
-DOCUMENTATION = """
+DOCUMENTATION = r"""
 module: consul_role
 short_description: Manipulate Consul roles
 version_added: 7.5.0
 description:
- - Allows the addition, modification and deletion of roles in a consul
-   cluster via the agent. For more details on using and configuring ACLs,
-   see U(https://www.consul.io/docs/guides/acl.html).
+  - Allows the addition, modification and deletion of roles in a Consul cluster using the agent. For more details on using
+    and configuring ACLs, see U(https://www.consul.io/docs/guides/acl.html).
 author:
   - Håkon Lerring (@Hakon)
 extends_documentation_fragment:
-  - community.general.consul
-  - community.general.consul.token
-  - community.general.consul.actiongroup_consul
-  - community.general.attributes
+  - community.general._consul
+  - community.general._consul.token
+  - community.general._consul.actiongroup_consul
+  - community.general._attributes
 attributes:
   check_mode:
     support: full
   diff_mode:
     support: partial
     details:
-      - In check mode the diff will miss operational attributes.
+      - In check mode the diff misses operational attributes.
+    version_added: 8.3.0
+  action_group:
     version_added: 8.3.0
 options:
   name:
@@ -40,22 +38,22 @@ options:
     type: str
   state:
     description:
-      - whether the role should be present or absent.
+      - Whether the role should be present or absent.
     choices: ['present', 'absent']
     default: present
     type: str
   description:
     description:
       - Description of the role.
-      - If not specified, the assigned description will not be changed.
+      - If not specified, the assigned description is not changed.
     type: str
   policies:
     type: list
     elements: dict
     description:
       - List of policies to attach to the role. Each policy is a dict.
-      - If the parameter is left blank, any policies currently assigned will not be changed.
-      - Any empty array (V([])) will clear any policies previously set.
+      - If the parameter is left blank, any policies currently assigned are not changed.
+      - Any empty array (V([])) clears any policies previously set.
     suboptions:
       name:
         description:
@@ -89,26 +87,26 @@ options:
     elements: dict
     description:
       - List of service identities to attach to the role.
-      - If not specified, any service identities currently assigned will not be changed.
-      - If the parameter is an empty array (V([])), any node identities assigned will be unassigned.
+      - If not specified, any service identities currently assigned are not changed.
+      - If the parameter is an empty array (V([])), any node identities assigned are unassigned.
     suboptions:
       service_name:
         description:
           - The name of the node.
           - Must not be longer than 256 characters, must start and end with a lowercase alphanumeric character.
-          - May only contain lowercase alphanumeric characters as well as - and _.
-          - This suboption has been renamed from O(service_identities[].name) to O(service_identities[].service_name)
-            in community.general 8.3.0. The old name can still be used.
+          - May only contain lowercase alphanumeric characters as well as V(-) and V(_).
+          - This suboption has been renamed from O(service_identities[].name) to O(service_identities[].service_name) in community.general
+            8.3.0. The old name can still be used.
         type: str
         required: true
         aliases:
           - name
       datacenters:
         description:
-          - The datacenters the policies will be effective.
-          - This will result in effective policy only being valid in this datacenter.
-          - If an empty array (V([])) is specified, the policies will valid in all datacenters.
-          - including those which do not yet exist but may in the future.
+          - The datacenters where the policies are effective.
+          - This results in effective policy only being valid in this datacenter.
+          - If an empty array (V([])) is specified, the policies are valid in all datacenters.
+          - Including those which do not yet exist but may in the future.
         type: list
         elements: str
   node_identities:
@@ -116,16 +114,16 @@ options:
     elements: dict
     description:
       - List of node identities to attach to the role.
-      - If not specified, any node identities currently assigned will not be changed.
-      - If the parameter is an empty array (V([])), any node identities assigned will be unassigned.
+      - If not specified, any node identities currently assigned are not changed.
+      - If the parameter is an empty array (V([])), any node identities assigned are unassigned.
     suboptions:
       node_name:
         description:
           - The name of the node.
           - Must not be longer than 256 characters, must start and end with a lowercase alphanumeric character.
-          - May only contain lowercase alphanumeric characters as well as - and _.
-          - This suboption has been renamed from O(node_identities[].name) to O(node_identities[].node_name)
-            in community.general 8.3.0. The old name can still be used.
+          - May only contain lowercase alphanumeric characters as well as V(-) and V(_).
+          - This suboption has been renamed from O(node_identities[].name) to O(node_identities[].node_name) in community.general
+            8.3.0. The old name can still be used.
         type: str
         required: true
         aliases:
@@ -133,12 +131,12 @@ options:
       datacenter:
         description:
           - The nodes datacenter.
-          - This will result in effective policy only being valid in this datacenter.
+          - This results in effective policy only being valid in this datacenter.
         type: str
         required: true
 """
 
-EXAMPLES = """
+EXAMPLES = r"""
 - name: Create a role with 2 policies
   community.general.consul_role:
     host: consul1.example.com
@@ -175,32 +173,36 @@ EXAMPLES = """
     state: absent
 """
 
-RETURN = """
+RETURN = r"""
 role:
-    description: The role object.
-    returned: success
-    type: dict
-    sample:
+  description: The role object.
+  returned: success
+  type: dict
+  sample:
+    {
+      "CreateIndex": 39,
+      "Description": "",
+      "Hash": "Trt0QJtxVEfvTTIcdTUbIJRr6Dsi6E4EcwSFxx9tCYM=",
+      "ID": "9a300b8d-48db-b720-8544-a37c0f5dafb5",
+      "ModifyIndex": 39,
+      "Name": "foo-role",
+      "Policies": [
         {
-            "CreateIndex": 39,
-            "Description": "",
-            "Hash": "Trt0QJtxVEfvTTIcdTUbIJRr6Dsi6E4EcwSFxx9tCYM=",
-            "ID": "9a300b8d-48db-b720-8544-a37c0f5dafb5",
-            "ModifyIndex": 39,
-            "Name": "foo-role",
-            "Policies": [
-                {"ID": "b1a00172-d7a1-0e66-a12e-7a4045c4b774", "Name": "foo-access"}
-            ]
+          "ID": "b1a00172-d7a1-0e66-a12e-7a4045c4b774",
+          "Name": "foo-access"
         }
+      ]
+    }
 operation:
-    description: The operation performed on the role.
-    returned: changed
-    type: str
-    sample: update
+  description: The operation performed on the role.
+  returned: changed
+  type: str
+  sample: update
 """
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.community.general.plugins.module_utils.consul import (
+
+from ansible_collections.community.general.plugins.module_utils._consul import (
     AUTH_ARGUMENTS_SPEC,
     OPERATION_READ,
     _ConsulModule,
@@ -210,12 +212,12 @@ from ansible_collections.community.general.plugins.module_utils.consul import (
 class ConsulRoleModule(_ConsulModule):
     api_endpoint = "acl/role"
     result_key = "role"
-    unique_identifier = "id"
+    unique_identifiers = ["id"]
 
     def endpoint_url(self, operation, identifier=None):
         if operation == OPERATION_READ:
             return [self.api_endpoint, "name", self.params["name"]]
-        return super(ConsulRoleModule, self).endpoint_url(operation, identifier)
+        return super().endpoint_url(operation, identifier)
 
 
 NAME_ID_SPEC = dict(

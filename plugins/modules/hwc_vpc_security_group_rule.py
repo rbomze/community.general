@@ -1,116 +1,92 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2019 Huawei
 # GNU General Public License v3.0+ (see LICENSES/GPL-3.0-or-later.txt or https://www.gnu.org/licenses/gpl-3.0.txt)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 ###############################################################################
 # Documentation
 ###############################################################################
 
-DOCUMENTATION = '''
----
+DOCUMENTATION = r"""
 module: hwc_vpc_security_group_rule
 description:
-    - vpc security group management.
-short_description: Creates a resource of Vpc/SecurityGroupRule in Huawei Cloud
+  - VPC security group management.
+short_description: Creates a resource of VPC/SecurityGroupRule in Huawei Cloud
 notes:
-    - If O(id) option is provided, it takes precedence over
-      O(security_group_id) for security group rule selection.
-    - O(security_group_id) is used for security group rule selection. If more
-      than one security group rule with this options exists, execution is
-      aborted.
-    - No parameter support updating. If one of option is changed, the module
-      will create a new resource.
+  - If O(id) option is provided, it takes precedence over O(security_group_id) for security group rule selection.
+  - O(security_group_id) is used for security group rule selection. If more than one security group rule with this options
+    exists, execution is aborted.
+  - No parameter support updating. If one of option is changed, the module creates a new resource.
 version_added: '0.2.0'
 author: Huawei Inc. (@huaweicloud)
 requirements:
-    - keystoneauth1 >= 3.6.0
+  - keystoneauth1 >= 3.6.0
 attributes:
-    check_mode:
-        support: full
-    diff_mode:
-        support: none
+  check_mode:
+    support: full
+  diff_mode:
+    support: none
 options:
-    state:
-        description:
-            - Whether the given object should exist in Huawei Cloud.
-        type: str
-        choices: ['present', 'absent']
-        default: 'present'
-    direction:
-        description:
-            - Specifies the direction of access control. The value can be
-              egress or ingress.
-        type: str
-        required: true
-    security_group_id:
-        description:
-            - Specifies the security group rule ID, which uniquely identifies
-              the security group rule.
-        type: str
-        required: true
+  state:
     description:
-        description:
-            - Provides supplementary information about the security group rule.
-              The value is a string of no more than 255 characters that can
-              contain letters and digits.
-        type: str
-        required: false
-    ethertype:
-        description:
-            - Specifies the IP protocol version. The value can be IPv4 or IPv6.
-              If you do not set this parameter, IPv4 is used by default.
-        type: str
-        required: false
-    port_range_max:
-        description:
-            - Specifies the end port number. The value ranges from 1 to 65535.
-              If the protocol is not icmp, the value cannot be smaller than the
-              port_range_min value. An empty value indicates all ports.
-        type: int
-        required: false
-    port_range_min:
-        description:
-            - Specifies the start port number. The value ranges from 1 to
-              65535. The value cannot be greater than the port_range_max value.
-              An empty value indicates all ports.
-        type: int
-        required: false
-    protocol:
-        description:
-            - Specifies the protocol type. The value can be icmp, tcp, or udp.
-              If the parameter is left blank, the security group supports all
-              protocols.
-        type: str
-        required: false
-    remote_group_id:
-        description:
-            - Specifies the ID of the peer security group. The value is
-              exclusive with parameter remote_ip_prefix.
-        type: str
-        required: false
-    remote_ip_prefix:
-        description:
-            - Specifies the remote IP address. If the access control direction
-              is set to egress, the parameter specifies the source IP address.
-              If the access control direction is set to ingress, the parameter
-              specifies the destination IP address. The value can be in the
-              CIDR format or IP addresses. The parameter is exclusive with
-              parameter remote_group_id.
-        type: str
-        required: false
+      - Whether the given object should exist in Huawei Cloud.
+    type: str
+    choices: ['present', 'absent']
+    default: 'present'
+  direction:
+    description:
+      - Specifies the direction of access control. The value can be egress or ingress.
+    type: str
+    required: true
+  security_group_id:
+    description:
+      - Specifies the security group rule ID, which uniquely identifies the security group rule.
+    type: str
+    required: true
+  description:
+    description:
+      - Provides supplementary information about the security group rule. The value is a string of no more than 255 characters
+        that can contain letters and digits.
+    type: str
+  ethertype:
+    description:
+      - Specifies the IP protocol version. The value can be IPv4 or IPv6. If you do not set this parameter, IPv4 is used by
+        default.
+    type: str
+  port_range_max:
+    description:
+      - Specifies the end port number. The value ranges from 1 to 65535. If the protocol is not icmp, the value cannot be
+        smaller than the port_range_min value. An empty value indicates all ports.
+    type: int
+  port_range_min:
+    description:
+      - Specifies the start port number. The value ranges from 1 to 65535. The value cannot be greater than the port_range_max
+        value. An empty value indicates all ports.
+    type: int
+  protocol:
+    description:
+      - Specifies the protocol type. The value can be icmp, tcp, or udp. If the parameter is left blank, the security group
+        supports all protocols.
+    type: str
+  remote_group_id:
+    description:
+      - Specifies the ID of the peer security group. The value is exclusive with parameter remote_ip_prefix.
+    type: str
+  remote_ip_prefix:
+    description:
+      - Specifies the remote IP address. If the access control direction is set to egress, the parameter specifies the source
+        IP address. If the access control direction is set to ingress, the parameter specifies the destination IP address.
+        The value can be in the CIDR format or IP addresses. The parameter is exclusive with parameter remote_group_id.
+    type: str
 extends_documentation_fragment:
-  - community.general.hwc
-  - community.general.attributes
+  - community.general._hwc
+  - community.general._attributes
+"""
 
-'''
-
-EXAMPLES = '''
+EXAMPLES = r"""
 # create a security group rule
 - name: Create a security group
   hwc_vpc_security_group:
@@ -125,92 +101,88 @@ EXAMPLES = '''
     security_group_id: "{{ sg.id }}"
     port_range_min: 22
     remote_ip_prefix: "0.0.0.0/0"
-'''
+"""
 
-RETURN = '''
-    direction:
-        description:
-            - Specifies the direction of access control. The value can be
-              egress or ingress.
-        type: str
-        returned: success
-    security_group_id:
-        description:
-            - Specifies the security group rule ID, which uniquely identifies
-              the security group rule.
-        type: str
-        returned: success
-    description:
-        description:
-            - Provides supplementary information about the security group rule.
-              The value is a string of no more than 255 characters that can
-              contain letters and digits.
-        type: str
-        returned: success
-    ethertype:
-        description:
-            - Specifies the IP protocol version. The value can be IPv4 or IPv6.
-              If you do not set this parameter, IPv4 is used by default.
-        type: str
-        returned: success
-    port_range_max:
-        description:
-            - Specifies the end port number. The value ranges from 1 to 65535.
-              If the protocol is not icmp, the value cannot be smaller than the
-              port_range_min value. An empty value indicates all ports.
-        type: int
-        returned: success
-    port_range_min:
-        description:
-            - Specifies the start port number. The value ranges from 1 to
-              65535. The value cannot be greater than the port_range_max value.
-              An empty value indicates all ports.
-        type: int
-        returned: success
-    protocol:
-        description:
-            - Specifies the protocol type. The value can be icmp, tcp, or udp.
-              If the parameter is left blank, the security group supports all
-              protocols.
-        type: str
-        returned: success
-    remote_group_id:
-        description:
-            - Specifies the ID of the peer security group. The value is
-              exclusive with parameter remote_ip_prefix.
-        type: str
-        returned: success
-    remote_ip_prefix:
-        description:
-            - Specifies the remote IP address. If the access control direction
-              is set to egress, the parameter specifies the source IP address.
-              If the access control direction is set to ingress, the parameter
-              specifies the destination IP address. The value can be in the
-              CIDR format or IP addresses. The parameter is exclusive with
-              parameter remote_group_id.
-        type: str
-        returned: success
-'''
+RETURN = r"""
+direction:
+  description:
+    - Specifies the direction of access control. The value can be egress or ingress.
+  type: str
+  returned: success
+security_group_id:
+  description:
+    - Specifies the security group rule ID, which uniquely identifies the security group rule.
+  type: str
+  returned: success
+description:
+  description:
+    - Provides supplementary information about the security group rule. The value is a string of no more than 255 characters
+      that can contain letters and digits.
+  type: str
+  returned: success
+ethertype:
+  description:
+    - Specifies the IP protocol version. The value can be IPv4 or IPv6. If you do not set this parameter, IPv4 is used by
+      default.
+  type: str
+  returned: success
+port_range_max:
+  description:
+    - Specifies the end port number. The value ranges from 1 to 65535. If the protocol is not icmp, the value cannot be smaller
+      than the port_range_min value. An empty value indicates all ports.
+  type: int
+  returned: success
+port_range_min:
+  description:
+    - Specifies the start port number. The value ranges from 1 to 65535. The value cannot be greater than the port_range_max
+      value. An empty value indicates all ports.
+  type: int
+  returned: success
+protocol:
+  description:
+    - Specifies the protocol type. The value can be icmp, tcp, or udp. If the parameter is left blank, the security group
+      supports all protocols.
+  type: str
+  returned: success
+remote_group_id:
+  description:
+    - Specifies the ID of the peer security group. The value is exclusive with parameter remote_ip_prefix.
+  type: str
+  returned: success
+remote_ip_prefix:
+  description:
+    - Specifies the remote IP address. If the access control direction is set to egress, the parameter specifies the source
+      IP address. If the access control direction is set to ingress, the parameter specifies the destination IP address. The
+      value can be in the CIDR format or IP addresses. The parameter is exclusive with parameter remote_group_id.
+  type: str
+  returned: success
+"""
 
-from ansible_collections.community.general.plugins.module_utils.hwc_utils import (
-    Config, HwcClientException, HwcModule, are_different_dicts, build_path,
-    get_region, is_empty_value, navigate_value)
+from ansible_collections.community.general.plugins.module_utils._hwc_utils import (
+    Config,
+    HwcClientException,
+    HwcModule,
+    are_different_dicts,
+    build_path,
+    get_region,
+    is_empty_value,
+    navigate_value,
+)
 
 
 def build_module():
     return HwcModule(
         argument_spec=dict(
-            state=dict(default='present', choices=['present', 'absent'],
-                       type='str'),
-            direction=dict(type='str', required=True),
-            security_group_id=dict(type='str', required=True),
-            description=dict(type='str'),
-            ethertype=dict(type='str'),
-            port_range_max=dict(type='int'),
-            port_range_min=dict(type='int'),
-            protocol=dict(type='str'),
-            remote_group_id=dict(type='str'),
-            remote_ip_prefix=dict(type='str')
+            state=dict(default="present", choices=["present", "absent"], type="str"),
+            direction=dict(type="str", required=True),
+            security_group_id=dict(type="str", required=True),
+            description=dict(type="str"),
+            ethertype=dict(type="str"),
+            port_range_max=dict(type="int"),
+            port_range_min=dict(type="int"),
+            protocol=dict(type="str"),
+            remote_group_id=dict(type="str"),
+            remote_ip_prefix=dict(type="str"),
         ),
         supports_check_mode=True,
     )
@@ -224,21 +196,20 @@ def main():
 
     try:
         resource = None
-        if module.params['id']:
+        if module.params["id"]:
             resource = True
         else:
             v = search_resource(config)
             if len(v) > 1:
-                raise Exception("Found more than one resource(%s)" % ", ".join([
-                                navigate_value(i, ["id"]) for i in v]))
+                raise Exception(f"Found more than one resource({', '.join([navigate_value(i, ['id']) for i in v])})")
 
             if len(v) == 1:
                 resource = v[0]
-                module.params['id'] = navigate_value(resource, ["id"])
+                module.params["id"] = navigate_value(resource, ["id"])
 
         result = {}
         changed = False
-        if module.params['state'] == 'present':
+        if module.params["state"] == "present":
             if resource is None:
                 if not module.check_mode:
                     create(config)
@@ -248,10 +219,10 @@ def main():
             expect = user_input_parameters(module)
             if are_different_dicts(expect, current):
                 raise Exception(
-                    "Cannot change option from (%s) to (%s) for an"
-                    " existing security group(%s)." % (current, expect, module.params.get('id')))
+                    f"Cannot change option from ({current}) to ({expect}) for an existing security group({module.params['id']})."
+                )
             result = read_resource(config)
-            result['id'] = module.params.get('id')
+            result["id"] = module.params["id"]
         else:
             if resource:
                 if not module.check_mode:
@@ -262,21 +233,21 @@ def main():
         module.fail_json(msg=str(ex))
 
     else:
-        result['changed'] = changed
+        result["changed"] = changed
         module.exit_json(**result)
 
 
 def user_input_parameters(module):
     return {
-        "description": module.params.get("description"),
-        "direction": module.params.get("direction"),
-        "ethertype": module.params.get("ethertype"),
-        "port_range_max": module.params.get("port_range_max"),
-        "port_range_min": module.params.get("port_range_min"),
-        "protocol": module.params.get("protocol"),
-        "remote_group_id": module.params.get("remote_group_id"),
-        "remote_ip_prefix": module.params.get("remote_ip_prefix"),
-        "security_group_id": module.params.get("security_group_id"),
+        "description": module.params["description"],
+        "direction": module.params["direction"],
+        "ethertype": module.params["ethertype"],
+        "port_range_max": module.params["port_range_max"],
+        "port_range_min": module.params["port_range_min"],
+        "protocol": module.params["protocol"],
+        "remote_group_id": module.params["remote_group_id"],
+        "remote_ip_prefix": module.params["remote_ip_prefix"],
+        "security_group_id": module.params["security_group_id"],
     }
 
 
@@ -287,7 +258,7 @@ def create(config):
 
     params = build_create_parameters(opts)
     r = send_create_request(module, params, client)
-    module.params['id'] = navigate_value(r, ["security_group_rule", "id"])
+    module.params["id"] = navigate_value(r, ["security_group_rule", "id"])
 
 
 def delete(config):
@@ -313,7 +284,7 @@ def _build_query_link(opts):
     query_link = "?marker={marker}&limit=10"
     v = navigate_value(opts, ["security_group_id"])
     if v:
-        query_link += "&security_group_id=" + str(v)
+        query_link += f"&security_group_id={v}"
 
     return query_link
 
@@ -324,10 +295,10 @@ def search_resource(config):
     opts = user_input_parameters(module)
     identity_obj = _build_identity_object(opts)
     query_link = _build_query_link(opts)
-    link = "security-group-rules" + query_link
+    link = f"security-group-rules{query_link}"
 
     result = []
-    p = {'marker': ''}
+    p = {"marker": ""}
     while True:
         url = link.format(**p)
         r = send_list_request(module, client, url)
@@ -342,7 +313,7 @@ def search_resource(config):
         if len(result) > 1:
             break
 
-        p['marker'] = r[-1].get('id')
+        p["marker"] = r[-1].get("id")
 
     return result
 
@@ -399,8 +370,7 @@ def send_create_request(module, params, client):
     try:
         r = client.post(url, params)
     except HwcClientException as ex:
-        msg = ("module(hwc_vpc_security_group_rule): error running "
-               "api(create), error: %s" % str(ex))
+        msg = f"module(hwc_vpc_security_group_rule): error running api(create), error: {ex}"
         module.fail_json(msg=msg)
 
     return r
@@ -412,8 +382,7 @@ def send_delete_request(module, params, client):
     try:
         r = client.delete(url, params)
     except HwcClientException as ex:
-        msg = ("module(hwc_vpc_security_group_rule): error running "
-               "api(delete), error: %s" % str(ex))
+        msg = f"module(hwc_vpc_security_group_rule): error running api(delete), error: {ex}"
         module.fail_json(msg=msg)
 
     return r
@@ -426,8 +395,7 @@ def send_read_request(module, client):
     try:
         r = client.get(url)
     except HwcClientException as ex:
-        msg = ("module(hwc_vpc_security_group_rule): error running "
-               "api(read), error: %s" % str(ex))
+        msg = f"module(hwc_vpc_security_group_rule): error running api(read), error: {ex}"
         module.fail_json(msg=msg)
 
     return navigate_value(r, ["security_group_rule"], None)
@@ -495,13 +463,11 @@ def update_properties(module, response, array_index, exclude_output=False):
 
 
 def send_list_request(module, client, url):
-
     r = None
     try:
         r = client.get(url)
     except HwcClientException as ex:
-        msg = ("module(hwc_vpc_security_group_rule): error running "
-               "api(list), error: %s" % str(ex))
+        msg = f"module(hwc_vpc_security_group_rule): error running api(list), error: {ex}"
         module.fail_json(msg=msg)
 
     return navigate_value(r, ["security_group_rules"], None)
@@ -572,5 +538,5 @@ def fill_list_resp_body(body):
     return result
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

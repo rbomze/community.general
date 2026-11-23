@@ -1,24 +1,23 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright (c) 2019, Bojan Vitnik <bvitnik@mainstream.rs>
 # GNU General Public License v3.0+ (see LICENSES/GPL-3.0-or-later.txt or https://www.gnu.org/licenses/gpl-3.0.txt)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-
-import sys
 import importlib
+
 import pytest
 
 from .FakeAnsibleModule import FakeAnsibleModule
+
+XENSERVER_MODULE_UTILS_PATH = "ansible_collections.community.general.plugins.module_utils._xenserver"
 
 
 @pytest.fixture
 def fake_ansible_module(request):
     """Returns fake AnsibleModule with fake module params."""
-    if hasattr(request, 'param'):
+    if hasattr(request, "param"):
         return FakeAnsibleModule(request.param)
     else:
         params = {
@@ -32,20 +31,15 @@ def fake_ansible_module(request):
 
 
 @pytest.fixture(autouse=True)
-def XenAPI():
+def XenAPI(mocker):
     """Imports and returns fake XenAPI module."""
 
     # Import of fake XenAPI module is wrapped by fixture so that it does not
     # affect other unit tests which could potentially also use XenAPI module.
+    fake_xenapi = importlib.import_module("ansible_collections.community.general.tests.unit.plugins.modules.FakeXenAPI")
 
-    # First we use importlib.import_module() to import the module and assign
-    # it to a local symbol.
-    fake_xenapi = importlib.import_module('ansible_collections.community.general.tests.unit.plugins.modules.FakeXenAPI')
-
-    # Now we populate Python module cache with imported fake module using the
-    # original module name (XenAPI). That way, any 'import XenAPI' statement
-    # will just load already imported fake module from the cache.
-    sys.modules['XenAPI'] = fake_xenapi
+    mocker.patch(f"{XENSERVER_MODULE_UTILS_PATH}.HAS_XENAPI", True)
+    mocker.patch(f"{XENSERVER_MODULE_UTILS_PATH}.XenAPI", fake_xenapi, create=True)
 
     return fake_xenapi
 
@@ -54,10 +48,6 @@ def XenAPI():
 def xenserver_guest_info(XenAPI):
     """Imports and returns xenserver_guest_info module."""
 
-    # Since we are wrapping fake XenAPI module inside a fixture, all modules
-    # that depend on it have to be imported inside a test function. To make
-    # this easier to handle and remove some code repetition, we wrap the import
-    # of xenserver_guest_info module with a fixture.
     from ansible_collections.community.general.plugins.modules import xenserver_guest_info
 
     return xenserver_guest_info
@@ -67,10 +57,6 @@ def xenserver_guest_info(XenAPI):
 def xenserver_guest_powerstate(XenAPI):
     """Imports and returns xenserver_guest_powerstate module."""
 
-    # Since we are wrapping fake XenAPI module inside a fixture, all modules
-    # that depend on it have to be imported inside a test function. To make
-    # this easier to handle and remove some code repetition, we wrap the import
-    # of xenserver_guest_powerstate module with a fixture.
     from ansible_collections.community.general.plugins.modules import xenserver_guest_powerstate
 
     return xenserver_guest_powerstate

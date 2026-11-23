@@ -1,187 +1,169 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2019 Huawei
 # GNU General Public License v3.0+ (see LICENSES/GPL-3.0-or-later.txt or https://www.gnu.org/licenses/gpl-3.0.txt)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 ###############################################################################
 # Documentation
 ###############################################################################
 
-DOCUMENTATION = '''
----
+DOCUMENTATION = r"""
 module: hwc_vpc_security_group
 description:
-    - vpc security group management.
-short_description: Creates a resource of Vpc/SecurityGroup in Huawei Cloud
+  - VPC security group management.
+short_description: Creates a resource of VPC/SecurityGroup in Huawei Cloud
 notes:
-    - If O(id) option is provided, it takes precedence over O(name),
-      O(enterprise_project_id), and O(vpc_id) for security group selection.
-    - O(name), O(enterprise_project_id) and O(vpc_id) are used for security
-      group selection. If more than one security group with this options exists,
-      execution is aborted.
-    - No parameter support updating. If one of option is changed, the module
-      will create a new resource.
+  - If O(id) option is provided, it takes precedence over O(name), O(enterprise_project_id), and O(vpc_id) for security group
+    selection.
+  - O(name), O(enterprise_project_id) and O(vpc_id) are used for security group selection. If more than one security group
+    with this options exists, execution is aborted.
+  - No parameter support updating. If one of option is changed, the module creates a new resource.
 version_added: '0.2.0'
 author: Huawei Inc. (@huaweicloud)
 requirements:
-    - keystoneauth1 >= 3.6.0
+  - keystoneauth1 >= 3.6.0
 attributes:
-    check_mode:
-        support: full
-    diff_mode:
-        support: none
+  check_mode:
+    support: full
+  diff_mode:
+    support: none
 options:
-    state:
-        description:
-            - Whether the given object should exist in Huawei Cloud.
-        type: str
-        choices: ['present', 'absent']
-        default: 'present'
-    name:
-        description:
-            - Specifies the security group name. The value is a string of 1 to
-              64 characters that can contain letters, digits, underscores (V(_)),
-              hyphens (V(-)), and periods (V(.)).
-        type: str
-        required: true
-    enterprise_project_id:
-        description:
-            - Specifies the enterprise project ID. When creating a security
-              group, associate the enterprise project ID with the security
-              group.s
-        type: str
-        required: false
-    vpc_id:
-        description:
-            - Specifies the resource ID of the VPC to which the security group
-              belongs.
-        type: str
-        required: false
+  state:
+    description:
+      - Whether the given object should exist in Huawei Cloud.
+    type: str
+    choices: ['present', 'absent']
+    default: 'present'
+  name:
+    description:
+      - Specifies the security group name. The value is a string of 1 to 64 characters that can contain letters, digits, underscores
+        (V(_)), hyphens (V(-)), and periods (V(.)).
+    type: str
+    required: true
+  enterprise_project_id:
+    description:
+      - Specifies the enterprise project ID. When creating a security group, associate the enterprise project ID with the
+        security group.s.
+    type: str
+  vpc_id:
+    description:
+      - Specifies the resource ID of the VPC to which the security group belongs.
+    type: str
 extends_documentation_fragment:
-  - community.general.hwc
-  - community.general.attributes
+  - community.general._hwc
+  - community.general._attributes
+"""
 
-'''
-
-EXAMPLES = '''
+EXAMPLES = r"""
 # create a security group
 - name: Create a security group
   community.general.hwc_vpc_security_group:
     name: "ansible_network_security_group_test"
-'''
+"""
 
-RETURN = '''
-    name:
-        description:
-            - Specifies the security group name. The value is a string of 1 to
-              64 characters that can contain letters, digits, underscores (V(_)),
-              hyphens (V(-)), and periods (V(.)).
-        type: str
-        returned: success
-    enterprise_project_id:
-        description:
-            - Specifies the enterprise project ID. When creating a security
-              group, associate the enterprise project ID with the security
-              group.
-        type: str
-        returned: success
-    vpc_id:
-        description:
-            - Specifies the resource ID of the VPC to which the security group
-              belongs.
-        type: str
-        returned: success
-    rules:
-        description:
-            - Specifies the security group rule, which ensures that resources
-              in the security group can communicate with one another.
-        type: complex
-        returned: success
-        contains:
-            description:
-                description:
-                    - Provides supplementary information about the security
-                      group rule.
-                type: str
-                returned: success
-            direction:
-                description:
-                    - Specifies the direction of access control. The value can
-                      be egress or ingress.
-                type: str
-                returned: success
-            ethertype:
-                description:
-                    - Specifies the IP protocol version. The value can be IPv4
-                      or IPv6.
-                type: str
-                returned: success
-            id:
-                description:
-                    - Specifies the security group rule ID.
-                type: str
-                returned: success
-            port_range_max:
-                description:
-                    - Specifies the end port number. The value ranges from 1 to
-                      65535. If the protocol is not icmp, the value cannot be
-                      smaller than the port_range_min value. An empty value
-                      indicates all ports.
-                type: int
-                returned: success
-            port_range_min:
-                description:
-                    - Specifies the start port number. The value ranges from 1
-                      to 65535. The value cannot be greater than the
-                      port_range_max value. An empty value indicates all ports.
-                type: int
-                returned: success
-            protocol:
-                description:
-                    - Specifies the protocol type. The value can be icmp, tcp,
-                      udp, or others. If the parameter is left blank, the
-                      security group supports all protocols.
-                type: str
-                returned: success
-            remote_address_group_id:
-                description:
-                    - Specifies the ID of remote IP address group.
-                type: str
-                returned: success
-            remote_group_id:
-                description:
-                    - Specifies the ID of the peer security group.
-                type: str
-                returned: success
-            remote_ip_prefix:
-                description:
-                    - Specifies the remote IP address. If the access control
-                      direction is set to egress, the parameter specifies the
-                      source IP address. If the access control direction is set
-                      to ingress, the parameter specifies the destination IP
-                      address.
-                type: str
-                returned: success
-'''
+RETURN = r"""
+name:
+  description:
+    - Specifies the security group name. The value is a string of 1 to 64 characters that can contain letters, digits, underscores
+      (V(_)), hyphens (V(-)), and periods (V(.)).
+  type: str
+  returned: success
+enterprise_project_id:
+  description:
+    - Specifies the enterprise project ID. When creating a security group, associate the enterprise project ID with the security
+      group.
+  type: str
+  returned: success
+vpc_id:
+  description:
+    - Specifies the resource ID of the VPC to which the security group belongs.
+  type: str
+  returned: success
+rules:
+  description:
+    - Specifies the security group rule, which ensures that resources in the security group can communicate with one another.
+  type: list
+  elements: dict
+  returned: success
+  contains:
+    description:
+      description:
+        - Provides supplementary information about the security group rule.
+      type: str
+      returned: success
+    direction:
+      description:
+        - Specifies the direction of access control. The value can be egress or ingress.
+      type: str
+      returned: success
+    ethertype:
+      description:
+        - Specifies the IP protocol version. The value can be IPv4 or IPv6.
+      type: str
+      returned: success
+    id:
+      description:
+        - Specifies the security group rule ID.
+      type: str
+      returned: success
+    port_range_max:
+      description:
+        - Specifies the end port number. The value ranges from 1 to 65535. If the protocol is not icmp, the value cannot be
+          smaller than the port_range_min value. An empty value indicates all ports.
+      type: int
+      returned: success
+    port_range_min:
+      description:
+        - Specifies the start port number. The value ranges from 1 to 65535. The value cannot be greater than the port_range_max
+          value. An empty value indicates all ports.
+      type: int
+      returned: success
+    protocol:
+      description:
+        - Specifies the protocol type. The value can be icmp, tcp, udp, or others. If the parameter is left blank, the security
+          group supports all protocols.
+      type: str
+      returned: success
+    remote_address_group_id:
+      description:
+        - Specifies the ID of remote IP address group.
+      type: str
+      returned: success
+    remote_group_id:
+      description:
+        - Specifies the ID of the peer security group.
+      type: str
+      returned: success
+    remote_ip_prefix:
+      description:
+        - Specifies the remote IP address. If the access control direction is set to egress, the parameter specifies the source
+          IP address. If the access control direction is set to ingress, the parameter specifies the destination IP address.
+      type: str
+      returned: success
+"""
 
-from ansible_collections.community.general.plugins.module_utils.hwc_utils import (
-    Config, HwcClientException, HwcModule, are_different_dicts, build_path,
-    get_region, is_empty_value, navigate_value)
+from ansible_collections.community.general.plugins.module_utils._hwc_utils import (
+    Config,
+    HwcClientException,
+    HwcModule,
+    are_different_dicts,
+    build_path,
+    get_region,
+    is_empty_value,
+    navigate_value,
+)
 
 
 def build_module():
     return HwcModule(
         argument_spec=dict(
-            state=dict(default='present', choices=['present', 'absent'],
-                       type='str'),
-            name=dict(type='str', required=True),
-            enterprise_project_id=dict(type='str'),
-            vpc_id=dict(type='str')
+            state=dict(default="present", choices=["present", "absent"], type="str"),
+            name=dict(type="str", required=True),
+            enterprise_project_id=dict(type="str"),
+            vpc_id=dict(type="str"),
         ),
         supports_check_mode=True,
     )
@@ -195,23 +177,22 @@ def main():
 
     try:
         resource = None
-        if module.params.get("id"):
+        if module.params["id"]:
             resource = read_resource(config)
-            if module.params['state'] == 'present':
+            if module.params["state"] == "present":
                 check_resource_option(resource, module)
         else:
             v = search_resource(config)
             if len(v) > 1:
-                raise Exception("Found more than one resource(%s)" % ", ".join([
-                                navigate_value(i, ["id"]) for i in v]))
+                raise Exception(f"Found more than one resource({', '.join([navigate_value(i, ['id']) for i in v])})")
 
             if len(v) == 1:
                 resource = update_properties(module, {"read": v[0]}, None)
-                module.params['id'] = navigate_value(resource, ["id"])
+                module.params["id"] = navigate_value(resource, ["id"])
 
         result = {}
         changed = False
-        if module.params['state'] == 'present':
+        if module.params["state"] == "present":
             if resource is None:
                 if not module.check_mode:
                     resource = create(config)
@@ -228,16 +209,16 @@ def main():
         module.fail_json(msg=str(ex))
 
     else:
-        result['changed'] = changed
+        result["changed"] = changed
         module.exit_json(**result)
 
 
 def user_input_parameters(module):
     return {
-        "enterprise_project_id": module.params.get("enterprise_project_id"),
-        "name": module.params.get("name"),
-        "vpc_id": module.params.get("vpc_id"),
-        "id": module.params.get("id"),
+        "enterprise_project_id": module.params["enterprise_project_id"],
+        "name": module.params["name"],
+        "vpc_id": module.params["vpc_id"],
+        "id": module.params["id"],
     }
 
 
@@ -253,9 +234,8 @@ def check_resource_option(resource, module):
 
     if are_different_dicts(resource, opts):
         raise Exception(
-            "Cannot change option from (%s) to (%s) for an"
-            " existing security group(%s)." % (resource, opts,
-                                               module.params.get('id')))
+            f"Cannot change option from ({resource}) to ({opts}) for an existing security group({module.params['id']})."
+        )
 
 
 def create(config):
@@ -265,7 +245,7 @@ def create(config):
 
     params = build_create_parameters(opts)
     r = send_create_request(module, params, client)
-    module.params['id'] = navigate_value(r, ["security_group", "id"])
+    module.params["id"] = navigate_value(r, ["security_group", "id"])
 
     result = update_properties(module, {"read": fill_read_resp_body(r)}, None)
     return result
@@ -295,15 +275,15 @@ def _build_query_link(opts):
 
     v = navigate_value(opts, ["enterprise_project_id"])
     if v:
-        query_params.append("enterprise_project_id=" + str(v))
+        query_params.append(f"enterprise_project_id={v}")
 
     v = navigate_value(opts, ["vpc_id"])
     if v:
-        query_params.append("vpc_id=" + str(v))
+        query_params.append(f"vpc_id={v}")
 
     query_link = "?marker={marker}&limit=10"
     if query_params:
-        query_link += "&" + "&".join(query_params)
+        query_link += f"&{'&'.join(query_params)}"
 
     return query_link
 
@@ -314,10 +294,10 @@ def search_resource(config):
     opts = user_input_parameters(module)
     identity_obj = _build_identity_object(opts)
     query_link = _build_query_link(opts)
-    link = "security-groups" + query_link
+    link = f"security-groups{query_link}"
 
     result = []
-    p = {'marker': ''}
+    p = {"marker": ""}
     while True:
         url = link.format(**p)
         r = send_list_request(module, client, url)
@@ -332,7 +312,7 @@ def search_resource(config):
         if len(result) > 1:
             break
 
-        p['marker'] = r[-1].get('id')
+        p["marker"] = r[-1].get("id")
 
     return result
 
@@ -365,8 +345,7 @@ def send_create_request(module, params, client):
     try:
         r = client.post(url, params)
     except HwcClientException as ex:
-        msg = ("module(hwc_vpc_security_group): error running "
-               "api(create), error: %s" % str(ex))
+        msg = f"module(hwc_vpc_security_group): error running api(create), error: {ex}"
         module.fail_json(msg=msg)
 
     return r
@@ -378,8 +357,7 @@ def send_delete_request(module, params, client):
     try:
         r = client.delete(url, params)
     except HwcClientException as ex:
-        msg = ("module(hwc_vpc_security_group): error running "
-               "api(delete), error: %s" % str(ex))
+        msg = f"module(hwc_vpc_security_group): error running api(delete), error: {ex}"
         module.fail_json(msg=msg)
 
     return r
@@ -392,8 +370,7 @@ def send_read_request(module, client):
     try:
         r = client.get(url)
     except HwcClientException as ex:
-        msg = ("module(hwc_vpc_security_group): error running "
-               "api(read), error: %s" % str(ex))
+        msg = f"module(hwc_vpc_security_group): error running api(read), error: {ex}"
         module.fail_json(msg=msg)
 
     return navigate_value(r, ["security_group"], None)
@@ -454,8 +431,7 @@ def fill_read_resp_security_group_rules(value):
 def update_properties(module, response, array_index, exclude_output=False):
     r = user_input_parameters(module)
 
-    v = navigate_value(response, ["read", "enterprise_project_id"],
-                       array_index)
+    v = navigate_value(response, ["read", "enterprise_project_id"], array_index)
     r["enterprise_project_id"] = v
 
     v = navigate_value(response, ["read", "name"], array_index)
@@ -484,8 +460,7 @@ def flatten_rules(d, array_index, current_value, exclude_output):
     else:
         has_init_value = False
         result = []
-        v = navigate_value(d, ["read", "security_group_rules"],
-                           array_index)
+        v = navigate_value(d, ["read", "security_group_rules"], array_index)
         if not v:
             return current_value
         n = len(v)
@@ -502,53 +477,43 @@ def flatten_rules(d, array_index, current_value, exclude_output):
             val = result[i]
 
         if not exclude_output:
-            v = navigate_value(d, ["read", "security_group_rules", "description"],
-                               new_array_index)
+            v = navigate_value(d, ["read", "security_group_rules", "description"], new_array_index)
             val["description"] = v
 
         if not exclude_output:
-            v = navigate_value(d, ["read", "security_group_rules", "direction"],
-                               new_array_index)
+            v = navigate_value(d, ["read", "security_group_rules", "direction"], new_array_index)
             val["direction"] = v
 
         if not exclude_output:
-            v = navigate_value(d, ["read", "security_group_rules", "ethertype"],
-                               new_array_index)
+            v = navigate_value(d, ["read", "security_group_rules", "ethertype"], new_array_index)
             val["ethertype"] = v
 
         if not exclude_output:
-            v = navigate_value(d, ["read", "security_group_rules", "id"],
-                               new_array_index)
+            v = navigate_value(d, ["read", "security_group_rules", "id"], new_array_index)
             val["id"] = v
 
         if not exclude_output:
-            v = navigate_value(d, ["read", "security_group_rules", "port_range_max"],
-                               new_array_index)
+            v = navigate_value(d, ["read", "security_group_rules", "port_range_max"], new_array_index)
             val["port_range_max"] = v
 
         if not exclude_output:
-            v = navigate_value(d, ["read", "security_group_rules", "port_range_min"],
-                               new_array_index)
+            v = navigate_value(d, ["read", "security_group_rules", "port_range_min"], new_array_index)
             val["port_range_min"] = v
 
         if not exclude_output:
-            v = navigate_value(d, ["read", "security_group_rules", "protocol"],
-                               new_array_index)
+            v = navigate_value(d, ["read", "security_group_rules", "protocol"], new_array_index)
             val["protocol"] = v
 
         if not exclude_output:
-            v = navigate_value(d, ["read", "security_group_rules", "remote_address_group_id"],
-                               new_array_index)
+            v = navigate_value(d, ["read", "security_group_rules", "remote_address_group_id"], new_array_index)
             val["remote_address_group_id"] = v
 
         if not exclude_output:
-            v = navigate_value(d, ["read", "security_group_rules", "remote_group_id"],
-                               new_array_index)
+            v = navigate_value(d, ["read", "security_group_rules", "remote_group_id"], new_array_index)
             val["remote_group_id"] = v
 
         if not exclude_output:
-            v = navigate_value(d, ["read", "security_group_rules", "remote_ip_prefix"],
-                               new_array_index)
+            v = navigate_value(d, ["read", "security_group_rules", "remote_ip_prefix"], new_array_index)
             val["remote_ip_prefix"] = v
 
         if len(result) >= (i + 1):
@@ -563,13 +528,11 @@ def flatten_rules(d, array_index, current_value, exclude_output):
 
 
 def send_list_request(module, client, url):
-
     r = None
     try:
         r = client.get(url)
     except HwcClientException as ex:
-        msg = ("module(hwc_vpc_security_group): error running "
-               "api(list), error: %s" % str(ex))
+        msg = f"module(hwc_vpc_security_group): error running api(list), error: {ex}"
         module.fail_json(msg=msg)
 
     return navigate_value(r, ["security_groups"], None)
@@ -646,5 +609,5 @@ def fill_list_resp_security_group_rules(value):
     return result
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -1,24 +1,22 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 
 # Copyright (c) 2019 Dell EMC Inc.
 # GNU General Public License v3.0+ (see LICENSES/GPL-3.0-or-later.txt or https://www.gnu.org/licenses/gpl-3.0.txt)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
-DOCUMENTATION = '''
----
+DOCUMENTATION = r"""
 module: idrac_redfish_info
 short_description: Gather PowerEdge server information through iDRAC using Redfish APIs
 description:
-  - Builds Redfish URIs locally and sends them to remote iDRAC controllers to
-    get information back.
+  - Builds Redfish URIs locally and sends them to remote iDRAC controllers to get information back.
   - For use with Dell EMC iDRAC operations that require Redfish OEM extensions.
+  - This module is limited to retrieving iDRAC-specific data. For standard Redfish attributes, use M(community.general.redfish_info) instead.
 extends_documentation_fragment:
-  - community.general.attributes
-  - community.general.attributes.info_module
+  - community.general._attributes
+  - community.general._attributes.info_module
+  - community.general._redfish
 attributes:
   check_mode:
     version_added: 3.3.0
@@ -27,14 +25,13 @@ options:
   category:
     required: true
     description:
-      - Category to execute on iDRAC.
+      - Category to execute on iDRAC. V(Manager) is currently the only supported category.
     type: str
   command:
     required: true
     description:
-      - List of commands to execute on iDRAC.
-      - V(GetManagerAttributes) returns the list of dicts containing iDRAC,
-        LifecycleController and System attributes.
+      - List of commands to execute on iDRAC. Currently, only V(GetManagerAttributes) is supported.
+      - V(GetManagerAttributes) returns the list of dicts containing iDRAC, LifecycleController and System attributes.
     type: list
     elements: str
   baseuri:
@@ -60,98 +57,112 @@ options:
       - Timeout in seconds for HTTP requests to iDRAC.
     default: 10
     type: int
+  validate_certs:
+    version_added: 10.6.0
+  ca_path:
+    version_added: 10.6.0
+  ciphers:
+    version_added: 10.6.0
 
 author: "Jose Delarosa (@jose-delarosa)"
-'''
+"""
 
-EXAMPLES = '''
-  - name: Get Manager attributes with a default of 20 seconds
-    community.general.idrac_redfish_info:
-      category: Manager
-      command: GetManagerAttributes
-      baseuri: "{{ baseuri }}"
-      username: "{{ username }}"
-      password: "{{ password }}"
-      timeout: 20
-    register: result
+EXAMPLES = r"""
+- name: Get Manager attributes with a default of 20 seconds
+  community.general.idrac_redfish_info:
+    category: Manager
+    command: GetManagerAttributes
+    baseuri: "{{ baseuri }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    timeout: 20
+  register: result
 
-  # Examples to display the value of all or a single iDRAC attribute
-  - name: Store iDRAC attributes as a fact variable
-    ansible.builtin.set_fact:
-      idrac_attributes: "{{ result.redfish_facts.entries | selectattr('Id', 'defined') | selectattr('Id', 'equalto', 'iDRACAttributes') | list | first }}"
+# Examples to display the value of all or a single iDRAC attribute
+- name: Store iDRAC attributes as a fact variable
+  ansible.builtin.set_fact:
+    idrac_attributes: "{{ result.redfish_facts.entries | selectattr('Id', 'defined') | selectattr('Id', 'equalto', 'iDRACAttributes')
+      | list | first }}"
 
-  - name: Display all iDRAC attributes
-    ansible.builtin.debug:
-      var: idrac_attributes
+- name: Display all iDRAC attributes
+  ansible.builtin.debug:
+    var: idrac_attributes
 
-  - name: Display the value of 'Syslog.1.SysLogEnable' iDRAC attribute
-    ansible.builtin.debug:
-      var: idrac_attributes['Syslog.1.SysLogEnable']
+- name: Display the value of 'Syslog.1.SysLogEnable' iDRAC attribute
+  ansible.builtin.debug:
+    var: idrac_attributes['Syslog.1.SysLogEnable']
 
-  # Examples to display the value of all or a single LifecycleController attribute
-  - name: Store LifecycleController attributes as a fact variable
-    ansible.builtin.set_fact:
-      lc_attributes: "{{ result.redfish_facts.entries | selectattr('Id', 'defined') | selectattr('Id', 'equalto', 'LCAttributes') | list | first }}"
+# Examples to display the value of all or a single LifecycleController attribute
+- name: Store LifecycleController attributes as a fact variable
+  ansible.builtin.set_fact:
+    lc_attributes: "{{ result.redfish_facts.entries | selectattr('Id', 'defined') | selectattr('Id', 'equalto', 'LCAttributes')
+      | list | first }}"
 
-  - name: Display LifecycleController attributes
-    ansible.builtin.debug:
-      var: lc_attributes
+- name: Display LifecycleController attributes
+  ansible.builtin.debug:
+    var: lc_attributes
 
-  - name: Display the value of 'CollectSystemInventoryOnRestart' attribute
-    ansible.builtin.debug:
-      var: lc_attributes['LCAttributes.1.CollectSystemInventoryOnRestart']
+- name: Display the value of 'CollectSystemInventoryOnRestart' attribute
+  ansible.builtin.debug:
+    var: lc_attributes['LCAttributes.1.CollectSystemInventoryOnRestart']
 
-  # Examples to display the value of all or a single System attribute
-  - name: Store System attributes as a fact variable
-    ansible.builtin.set_fact:
-      system_attributes: "{{ result.redfish_facts.entries | selectattr('Id', 'defined') | selectattr('Id', 'equalto', 'SystemAttributes') | list | first }}"
+# Examples to display the value of all or a single System attribute
+- name: Store System attributes as a fact variable
+  ansible.builtin.set_fact:
+    system_attributes: "{{ result.redfish_facts.entries | selectattr('Id', 'defined') | selectattr('Id', 'equalto', 'SystemAttributes')
+      | list | first }}"
 
-  - name: Display System attributes
-    ansible.builtin.debug:
-      var: system_attributes
+- name: Display System attributes
+  ansible.builtin.debug:
+    var: system_attributes
 
-  - name: Display the value of 'PSRedPolicy'
-    ansible.builtin.debug:
-      var: system_attributes['ServerPwr.1.PSRedPolicy']
+- name: Display the value of 'PSRedPolicy'
+  ansible.builtin.debug:
+    var: system_attributes['ServerPwr.1.PSRedPolicy']
+"""
 
-'''
-
-RETURN = '''
+RETURN = r"""
 msg:
-    description: different results depending on task
-    returned: always
-    type: dict
-    sample: List of Manager attributes
-'''
+  description: Different results depending on task.
+  returned: always
+  type: dict
+  sample: List of Manager attributes
+"""
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.community.general.plugins.module_utils.redfish_utils import RedfishUtils
-from ansible.module_utils.common.text.converters import to_native
+
+from ansible_collections.community.general.plugins.module_utils._redfish_utils import (
+    REDFISH_COMMON_ARGUMENT_SPEC,
+    RedfishUtils,
+)
 
 
 class IdracRedfishUtils(RedfishUtils):
-
     def get_manager_attributes(self):
         result = {}
+        response = {}
         manager_attributes = []
-        properties = ['Attributes', 'Id']
+        properties = ["Attributes", "Id"]
 
-        response = self.get_request(self.root_uri + self.manager_uri)
+        if len(self.manager_uris) == 1:
+            response = self.get_request(f"{self.root_uri}{self.manager_uri}")
+        elif len(self.manager_uris) > 1:
+            response = self.get_request(f"{self.root_uri}/redfish/v1/Managers/iDRAC.Embedded.1", override_headers=None)
 
-        if response['ret'] is False:
+        if response["ret"] is False:
             return response
-        data = response['data']
+        data = response["data"]
 
         # Manager attributes are supported as part of iDRAC OEM extension
         # Attributes are supported only on iDRAC9
         try:
-            for members in data[u'Links'][u'Oem'][u'Dell'][u'DellAttributes']:
-                attributes_uri = members[u'@odata.id']
+            for members in data["Links"]["Oem"]["Dell"]["DellAttributes"]:
+                attributes_uri = members["@odata.id"]
 
                 response = self.get_request(self.root_uri + attributes_uri)
-                if response['ret'] is False:
+                if response["ret"] is False:
                     return response
-                data = response['data']
+                data = response["data"]
 
                 attributes = {}
                 for prop in properties:
@@ -161,89 +172,87 @@ class IdracRedfishUtils(RedfishUtils):
                 if attributes:
                     manager_attributes.append(attributes)
 
-            result['ret'] = True
+            result["ret"] = True
 
         except (AttributeError, KeyError) as e:
-            result['ret'] = False
-            result['msg'] = "Failed to find attribute/key: " + str(e)
+            result["ret"] = False
+            result["msg"] = f"Failed to find attribute/key: {e}"
 
         result["entries"] = manager_attributes
         return result
 
 
-CATEGORY_COMMANDS_ALL = {
-    "Manager": ["GetManagerAttributes"]
-}
+CATEGORY_COMMANDS_ALL = {"Manager": ["GetManagerAttributes"]}
 
 
 def main():
     result = {}
+    argument_spec = dict(
+        category=dict(required=True),
+        command=dict(required=True, type="list", elements="str"),
+        baseuri=dict(required=True),
+        username=dict(),
+        password=dict(no_log=True),
+        auth_token=dict(no_log=True),
+        timeout=dict(type="int", default=10),
+    )
+    argument_spec.update(REDFISH_COMMON_ARGUMENT_SPEC)
     module = AnsibleModule(
-        argument_spec=dict(
-            category=dict(required=True),
-            command=dict(required=True, type='list', elements='str'),
-            baseuri=dict(required=True),
-            username=dict(),
-            password=dict(no_log=True),
-            auth_token=dict(no_log=True),
-            timeout=dict(type='int', default=10)
-        ),
+        argument_spec,
         required_together=[
-            ('username', 'password'),
+            ("username", "password"),
         ],
         required_one_of=[
-            ('username', 'auth_token'),
+            ("username", "auth_token"),
         ],
         mutually_exclusive=[
-            ('username', 'auth_token'),
+            ("username", "auth_token"),
         ],
         supports_check_mode=True,
     )
 
-    category = module.params['category']
-    command_list = module.params['command']
+    category = module.params["category"]
+    command_list = module.params["command"]
 
     # admin credentials used for authentication
-    creds = {'user': module.params['username'],
-             'pswd': module.params['password'],
-             'token': module.params['auth_token']}
+    creds = {"user": module.params["username"], "pswd": module.params["password"], "token": module.params["auth_token"]}
 
     # timeout
-    timeout = module.params['timeout']
+    timeout = module.params["timeout"]
 
     # Build root URI
-    root_uri = "https://" + module.params['baseuri']
+    root_uri = f"https://{module.params['baseuri']}"
     rf_utils = IdracRedfishUtils(creds, root_uri, timeout, module)
 
     # Check that Category is valid
     if category not in CATEGORY_COMMANDS_ALL:
-        module.fail_json(msg=to_native("Invalid Category '%s'. Valid Categories = %s" % (category, list(CATEGORY_COMMANDS_ALL.keys()))))
+        module.fail_json(msg=f"Invalid Category '{category}'. Valid Categories = {list(CATEGORY_COMMANDS_ALL.keys())}")
 
     # Check that all commands are valid
     for cmd in command_list:
         # Fail if even one command given is invalid
         if cmd not in CATEGORY_COMMANDS_ALL[category]:
-            module.fail_json(msg=to_native("Invalid Command '%s'. Valid Commands = %s" % (cmd, CATEGORY_COMMANDS_ALL[category])))
+            module.fail_json(msg=f"Invalid Command '{cmd}'. Valid Commands = {CATEGORY_COMMANDS_ALL[category]}")
 
     # Organize by Categories / Commands
 
     if category == "Manager":
         # execute only if we find a Manager resource
         result = rf_utils._find_managers_resource()
-        if result['ret'] is False:
-            module.fail_json(msg=to_native(result['msg']))
+        if result["ret"] is False:
+            module.fail_json(msg=result["msg"])
 
         for command in command_list:
             if command == "GetManagerAttributes":
                 result = rf_utils.get_manager_attributes()
 
     # Return data back or fail with proper message
-    if result['ret'] is True:
-        del result['ret']
+    if result["ret"] is True:
+        del result["ret"]
         module.exit_json(redfish_facts=result)
     else:
-        module.fail_json(msg=to_native(result['msg']))
+        module.fail_json(msg=result["msg"])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

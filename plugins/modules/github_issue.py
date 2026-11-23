@@ -1,22 +1,19 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 
 # Copyright (c) 2017-18, Abhijeet Kasurde <akasurde@redhat.com>
 #
 #  GNU General Public License v3.0+ (see LICENSES/GPL-3.0-or-later.txt or https://www.gnu.org/licenses/gpl-3.0.txt)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r"""
 module: github_issue
 short_description: View GitHub issue
 description:
   - View GitHub issue for a given repository and organization.
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: full
@@ -40,24 +37,24 @@ options:
     type: int
   action:
     description:
-        - Get various details about issue depending upon action specified.
+      - Get various details about issue depending upon action specified.
     default: 'get_status'
     choices:
-        - 'get_status'
+      - get_status
     type: str
 author:
-    - Abhijeet Kasurde (@Akasurde)
-'''
+  - Abhijeet Kasurde (@Akasurde)
+"""
 
-RETURN = '''
+RETURN = r"""
 issue_status:
-    description: State of the GitHub issue
-    type: str
-    returned: success
-    sample: open, closed
-'''
+  description: State of the GitHub issue.
+  type: str
+  returned: success
+  sample: open, closed
+"""
 
-EXAMPLES = '''
+EXAMPLES = r"""
 - name: Check if GitHub issue is closed or not
   community.general.github_issue:
     organization: ansible
@@ -70,7 +67,7 @@ EXAMPLES = '''
   ansible.builtin.debug:
     msg: Do something when issue 23642 is open
   when: r.issue_status == 'open'
-'''
+"""
 
 import json
 
@@ -83,42 +80,42 @@ def main():
         argument_spec=dict(
             organization=dict(required=True),
             repo=dict(required=True),
-            issue=dict(type='int', required=True),
-            action=dict(choices=['get_status'], default='get_status'),
+            issue=dict(type="int", required=True),
+            action=dict(choices=["get_status"], default="get_status"),
         ),
         supports_check_mode=True,
     )
 
-    organization = module.params['organization']
-    repo = module.params['repo']
-    issue = module.params['issue']
-    action = module.params['action']
+    organization = module.params["organization"]
+    repo = module.params["repo"]
+    issue = module.params["issue"]
+    action = module.params["action"]
 
     result = dict()
 
     headers = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/vnd.github.v3+json',
+        "Content-Type": "application/json",
+        "Accept": "application/vnd.github.v3+json",
     }
 
-    url = "https://api.github.com/repos/%s/%s/issues/%s" % (organization, repo, issue)
+    url = f"https://api.github.com/repos/{organization}/{repo}/issues/{issue}"
 
     response, info = fetch_url(module, url, headers=headers)
-    if not (200 <= info['status'] < 400):
-        if info['status'] == 404:
-            module.fail_json(msg="Failed to find issue %s" % issue)
-        module.fail_json(msg="Failed to send request to %s: %s" % (url, info['msg']))
+    if not (200 <= info["status"] < 400):
+        if info["status"] == 404:
+            module.fail_json(msg=f"Failed to find issue {issue}")
+        module.fail_json(msg=f"Failed to send request to {url}: {info['msg']}")
 
     gh_obj = json.loads(response.read())
 
-    if action == 'get_status' or action is None:
+    if action == "get_status" or action is None:
         if module.check_mode:
             result.update(changed=True)
         else:
-            result.update(changed=True, issue_status=gh_obj['state'])
+            result.update(changed=True, issue_status=gh_obj["state"])
 
     module.exit_json(**result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2022, Alexei Znamensky
 # GNU General Public License v3.0+ (see LICENSES/GPL-3.0-or-later.txt or https://www.gnu.org/licenses/gpl-3.0.txt)
 # SPDX-License-Identifier: GPL-3.0-or-later
@@ -38,22 +37,12 @@ cmd_echo_tests:
       - test_result.out == "-- --answer=43 --bb-here\n"
       - test_result.err == ""
 
-  - name: implicit aa format
-    arg_formats:
-      bb:
-        func: as_bool
-        args: [--bb-here]
-    arg_order: ['aa', 'bb']
-    arg_values:
-      bb: true
-    aa: 1984
-    assertions:
-      - test_result.rc == 0
-      - test_result.out == "-- --aa 1984 --bb-here\n"
-      - test_result.err == ""
-
   - name: missing bb format
     arg_order: ['aa', 'bb']
+    arg_formats:
+      aa:
+        func: as_opt_eq_val
+        args: [--answer]
     arg_values:
       bb: true
     aa: 1984
@@ -69,6 +58,9 @@ cmd_echo_tests:
 
   - name: missing bb value
     arg_formats:
+      aa:
+        func: as_opt_eq_val
+        args: [--answer]
       bb:
         func: as_bool
         args: [--bb-here]
@@ -118,9 +110,9 @@ cmd_echo_tests:
     check_mode: true
     expect_error: true  # because if result contains rc != 0, ansible assumes error
     assertions:
-      - test_result.rc == None
-      - test_result.out == None
-      - test_result.err == None
+      - test_result.rc | default(None) == None
+      - test_result.out | default(None) == None
+      - test_result.err | default(None) == None
 
   - name: set aa and tt value
     arg_formats:
@@ -178,10 +170,7 @@ cmd_echo_tests:
   # this will not be in the regular set of paths get_bin_path() searches
   - name: use cmd {{ remote_tmp_dir }}/echo
     condition: >
-      {{
-        ansible_distribution != "MacOSX" and
-        not (ansible_distribution == "CentOS" and ansible_distribution_major_version is version('7.0', '<'))
-      }}
+      {{ ansible_facts.distribution != "MacOSX" }}
     copy_to: "{{ remote_tmp_dir }}"
     cmd: "{{ remote_tmp_dir }}/echo"
     arg_formats:
@@ -203,10 +192,7 @@ cmd_echo_tests:
   - name: use cmd echo with path_prefix {{ remote_tmp_dir }}
     cmd: echo
     condition: >
-      {{
-        ansible_distribution != "MacOSX" and
-        not (ansible_distribution == "CentOS" and ansible_distribution_major_version is version('7.0', '<'))
-      }}
+      {{ ansible_facts.distribution != "MacOSX" }}
     copy_to: "{{ remote_tmp_dir }}"
     path_prefix: "{{ remote_tmp_dir }}"
     arg_formats:
@@ -260,3 +246,5 @@ cmd_echo_tests:
     assertions:
       - >
         "No such file or directory" in test_result.msg
+        or
+        "Error executing command." == test_result.msg

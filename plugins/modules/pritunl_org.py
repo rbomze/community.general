@@ -1,61 +1,52 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 # Copyright (c) 2021, Florian Dambrine <android.florian@gmail.com>
 # GNU General Public License v3.0+ (see LICENSES/GPL-3.0-or-later.txt or https://www.gnu.org/licenses/gpl-3.0.txt)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from __future__ import absolute_import, division, print_function
+from __future__ import annotations
 
-__metaclass__ = type
-
-DOCUMENTATION = """
----
+DOCUMENTATION = r"""
 module: pritunl_org
 author: Florian Dambrine (@Lowess)
 version_added: 2.5.0
 short_description: Manages Pritunl Organizations using the Pritunl API
 description:
-    - A module to manage Pritunl organizations using the Pritunl API.
+  - A module to manage Pritunl organizations using the Pritunl API.
 extends_documentation_fragment:
-    - community.general.pritunl
-    - community.general.attributes
+  - community.general._pritunl
+  - community.general._attributes
 attributes:
-    check_mode:
-        support: none
-    diff_mode:
-        support: none
+  check_mode:
+    support: none
+  diff_mode:
+    support: none
 options:
-    name:
-        type: str
-        required: true
-        aliases:
-            - org
-        description:
-            - The name of the organization to manage in Pritunl.
-
-    force:
-        type: bool
-        default: false
-        description:
-            - If O(force) is V(true) and O(state) is V(absent), the module
-              will delete the organization, no matter if it contains users
-              or not. By default O(force) is V(false), which will cause the
-              module to fail the deletion of the organization when it contains
-              users.
-
-    state:
-        type: str
-        default: 'present'
-        choices:
-            - present
-            - absent
-        description:
-            - If V(present), the module adds organization O(name) to
-              Pritunl. If V(absent), attempt to delete the organization
-              from Pritunl (please read about O(force) usage).
+  name:
+    type: str
+    required: true
+    aliases:
+      - org
+    description:
+      - The name of the organization to manage in Pritunl.
+  force:
+    type: bool
+    default: false
+    description:
+      - If O(force) is V(true) and O(state) is V(absent), the module deletes the organization, no matter if it contains users
+        or not. By default O(force) is V(false), which causes the module to fail the deletion of the organization when it
+        contains users.
+  state:
+    type: str
+    default: 'present'
+    choices:
+      - present
+      - absent
+    description:
+      - If V(present), the module adds organization O(name) to Pritunl. If V(absent), attempt to delete the organization from
+        Pritunl (please read about O(force) usage).
 """
 
-EXAMPLES = """
+EXAMPLES = r"""
 - name: Ensure the organization named MyOrg exists
   community.general.pritunl_org:
     state: present
@@ -67,32 +58,32 @@ EXAMPLES = """
     name: MyOrg
 """
 
-RETURN = """
+RETURN = r"""
 response:
-    description: JSON representation of a Pritunl Organization.
-    returned: success
-    type: dict
-    sample:
-        {
-            "auth_api": false,
-            "name": "Foo",
-            "auth_token": null,
-            "user_count": 0,
-            "auth_secret": null,
-            "id": "csftwlu6uhralzi2dpmhekz3",
-        }
+  description: JSON representation of a Pritunl Organization.
+  returned: success
+  type: dict
+  sample:
+    {
+      "auth_api": false,
+      "name": "Foo",
+      "auth_token": null,
+      "user_count": 0,
+      "auth_secret": null,
+      "id": "csftwlu6uhralzi2dpmhekz3"
+    }
 """
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.common.text.converters import to_native
 from ansible.module_utils.common.dict_transformations import dict_merge
-from ansible_collections.community.general.plugins.module_utils.net_tools.pritunl.api import (
+
+from ansible_collections.community.general.plugins.module_utils._pritunl_api import (
     PritunlException,
     delete_pritunl_organization,
-    post_pritunl_organization,
-    list_pritunl_organizations,
     get_pritunl_settings,
+    list_pritunl_organizations,
+    post_pritunl_organization,
     pritunl_argument_spec,
 )
 
@@ -100,7 +91,7 @@ from ansible_collections.community.general.plugins.module_utils.net_tools.pritun
 def add_pritunl_organization(module):
     result = {}
 
-    org_name = module.params.get("name")
+    org_name = module.params["name"]
 
     org_obj_list = list_pritunl_organizations(
         **dict_merge(
@@ -130,8 +121,8 @@ def add_pritunl_organization(module):
 def remove_pritunl_organization(module):
     result = {}
 
-    org_name = module.params.get("name")
-    force = module.params.get("force")
+    org_name = module.params["name"]
+    force = module.params["force"]
 
     org_obj_list = []
 
@@ -166,11 +157,10 @@ def remove_pritunl_organization(module):
         else:
             module.fail_json(
                 msg=(
-                    "Can not remove organization '%s' with %d attached users. "
+                    f"Can not remove organization '{org_name}' with {org['user_count']} attached users. "
                     "Either set 'force' option to true or remove active users "
                     "from the organization"
                 )
-                % (org_name, org["user_count"])
             )
 
     module.exit_json(**result)
@@ -182,16 +172,14 @@ def main():
     argument_spec.update(
         dict(
             name=dict(required=True, type="str", aliases=["org"]),
-            force=dict(required=False, type="bool", default=False),
-            state=dict(
-                required=False, choices=["present", "absent"], default="present"
-            ),
+            force=dict(type="bool", default=False),
+            state=dict(choices=["present", "absent"], default="present"),
         )
     )
 
     module = AnsibleModule(argument_spec=argument_spec)
 
-    state = module.params.get("state")
+    state = module.params["state"]
 
     try:
         if state == "present":
@@ -199,7 +187,7 @@ def main():
         elif state == "absent":
             remove_pritunl_organization(module)
     except PritunlException as e:
-        module.fail_json(msg=to_native(e))
+        module.fail_json(msg=f"{e}")
 
 
 if __name__ == "__main__":

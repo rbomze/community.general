@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 
 # Copyright (c) 2014, Red Hat, Inc.
 # Copyright (c) 2014, Tim Bielawa <tbielawa@redhat.com>
@@ -8,166 +7,137 @@
 # GNU General Public License v3.0+ (see LICENSES/GPL-3.0-or-later.txt or https://www.gnu.org/licenses/gpl-3.0.txt)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-DOCUMENTATION = r'''
----
+DOCUMENTATION = r"""
 module: xml
 short_description: Manage bits and pieces of XML files or strings
 description:
   - A CRUD-like interface to managing bits of XML files.
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
+  - community.general._xml
 attributes:
   check_mode:
     support: full
   diff_mode:
     support: full
 options:
-  path:
-    description:
-    - Path to the file to operate on.
-    - This file must exist ahead of time.
-    - This parameter is required, unless O(xmlstring) is given.
-    type: path
-    aliases: [ dest, file ]
-  xmlstring:
-    description:
-    - A string containing XML on which to operate.
-    - This parameter is required, unless O(path) is given.
-    type: str
-  xpath:
-    description:
-    - A valid XPath expression describing the item(s) you want to manipulate.
-    - Operates on the document root, V(/), by default.
-    type: str
-  namespaces:
-    description:
-    - The namespace C(prefix:uri) mapping for the XPath expression.
-    - Needs to be a C(dict), not a C(list) of items.
-    type: dict
-    default: {}
   state:
     description:
-    - Set or remove an xpath selection (node(s), attribute(s)).
+      - Set or remove an xpath selection (node(s), attribute(s)).
     type: str
-    choices: [ absent, present ]
+    choices: [absent, present]
     default: present
-    aliases: [ ensure ]
+    aliases: [ensure]
   attribute:
     description:
-    - The attribute to select when using parameter O(value).
-    - This is a string, not prepended with V(@).
+      - The attribute to select when using parameter O(value).
+      - This is a string, not prepended with V(@).
     type: raw
   value:
     description:
-    - Desired state of the selected attribute.
-    - Either a string, or to unset a value, the Python V(None) keyword (YAML Equivalent, V(null)).
-    - Elements default to no value (but present).
-    - Attributes default to an empty string.
+      - Desired state of the selected attribute.
+      - Either a string, or to unset a value, the Python V(None) keyword (YAML Equivalent, V(null)).
+      - Elements default to no value (but present).
+      - Attributes default to an empty string.
     type: raw
   add_children:
     description:
-    - Add additional child-element(s) to a selected element for a given O(xpath).
-    - Child elements must be given in a list and each item may be either a string
-      (for example C(children=ansible) to add an empty C(<ansible/>) child element),
-      or a hash where the key is an element name and the value is the element value.
-    - This parameter requires O(xpath) to be set.
+      - Add additional child-element(s) to a selected element for a given O(xpath).
+      - Child elements must be given in a list and each item may be either a string (for example C(children=ansible) to add
+        an empty C(<ansible/>) child element), or a hash where the key is an element name and the value is the element value.
+      - This parameter requires O(xpath) to be set.
     type: list
     elements: raw
   set_children:
     description:
-    - Set the child-element(s) of a selected element for a given O(xpath).
-    - Removes any existing children.
-    - Child elements must be specified as in O(add_children).
-    - This parameter requires O(xpath) to be set.
+      - Set the child-element(s) of a selected element for a given O(xpath).
+      - Removes any existing children.
+      - Child elements must be specified as in O(add_children).
+      - This parameter requires O(xpath) to be set.
     type: list
     elements: raw
   count:
     description:
-    - Search for a given O(xpath) and provide the count of any matches.
-    - This parameter requires O(xpath) to be set.
+      - Search for a given O(xpath) and provide the count of any matches.
+      - This parameter requires O(xpath) to be set.
     type: bool
     default: false
   print_match:
     description:
-    - Search for a given O(xpath) and print out any matches.
-    - This parameter requires O(xpath) to be set.
+      - Search for a given O(xpath) and print out any matches.
+      - This parameter requires O(xpath) to be set.
     type: bool
     default: false
   pretty_print:
     description:
-    - Pretty print XML output.
+      - Pretty print XML output.
     type: bool
     default: false
   content:
     description:
-    - Search for a given O(xpath) and get content.
-    - This parameter requires O(xpath) to be set.
+      - Search for a given O(xpath) and get content.
+      - This parameter requires O(xpath) to be set.
     type: str
-    choices: [ attribute, text ]
+    choices: [attribute, text]
   input_type:
     description:
-    - Type of input for O(add_children) and O(set_children).
+      - Type of input for O(add_children) and O(set_children).
     type: str
-    choices: [ xml, yaml ]
+    choices: [xml, yaml]
     default: yaml
   backup:
     description:
-      - Create a backup file including the timestamp information so you can get
-        the original file back if you somehow clobbered it incorrectly.
+      - Create a backup file including the timestamp information so you can get the original file back if you somehow clobbered
+        it incorrectly.
     type: bool
     default: false
-  strip_cdata_tags:
-    description:
-      - Remove CDATA tags surrounding text values.
-      - Note that this might break your XML file if text values contain characters that could be interpreted as XML.
-    type: bool
-    default: false
+  huge_tree:
+    version_added: "13.0.0"
   insertbefore:
     description:
       - Add additional child-element(s) before the first selected element for a given O(xpath).
-      - Child elements must be given in a list and each item may be either a string
-        (for example C(children=ansible) to add an empty C(<ansible/>) child element),
-        or a hash where the key is an element name and the value is the element value.
+      - Child elements must be given in a list and each item may be either a string (for example C(children=ansible) to add
+        an empty C(<ansible/>) child element), or a hash where the key is an element name and the value is the element value.
       - This parameter requires O(xpath) to be set.
     type: bool
     default: false
   insertafter:
     description:
       - Add additional child-element(s) after the last selected element for a given O(xpath).
-      - Child elements must be given in a list and each item may be either a string
-        (for example C(children=ansible) to add an empty C(<ansible/>) child element),
-        or a hash where the key is an element name and the value is the element value.
+      - Child elements must be given in a list and each item may be either a string (for example C(children=ansible) to add
+        an empty C(<ansible/>) child element), or a hash where the key is an element name and the value is the element value.
       - This parameter requires O(xpath) to be set.
     type: bool
     default: false
-requirements:
-- lxml >= 2.3.0
+  create_if_missing:
+    description:
+      - When using O(value) and the O(xpath) matches no nodes, create the node.
+      - When set to V(false), a no-match is silently ignored instead of creating a new node.
+    type: bool
+    default: true
+    version_added: "13.0.0"
 notes:
-- Use the C(--check) and C(--diff) options when testing your expressions.
-- The diff output is automatically pretty-printed, so may not reflect the actual file content, only the file structure.
-- This module does not handle complicated xpath expressions, so limit xpath selectors to simple expressions.
-- Beware that in case your XML elements are namespaced, you need to use the O(namespaces) parameter, see the examples.
-- Namespaces prefix should be used for all children of an element where namespace is defined, unless another namespace is defined for them.
+  - Use the C(--check) and C(--diff) options when testing your expressions.
+  - The diff output is automatically pretty-printed, so may not reflect the actual file content, only the file structure.
 seealso:
-- name: Xml module development community wiki
-  description: More information related to the development of this xml module.
-  link: https://github.com/ansible/community/wiki/Module:-xml
-- name: Introduction to XPath
-  description: A brief tutorial on XPath (w3schools.com).
-  link: https://www.w3schools.com/xml/xpath_intro.asp
-- name: XPath Reference document
-  description: The reference documentation on XSLT/XPath (developer.mozilla.org).
-  link: https://developer.mozilla.org/en-US/docs/Web/XPath
+  - name: XML module development community wiki (archived)
+    description: More information related to the development of this xml module.
+    link: https://github.com/ansible/community/wiki/Module:-xml
+  - name: Introduction to XPath
+    description: A brief tutorial on XPath (w3schools.com).
+    link: https://www.w3schools.com/xml/xpath_intro.asp
+  - name: XPath Reference document
+    description: The reference documentation on XSLT/XPath (developer.mozilla.org).
+    link: https://developer.mozilla.org/en-US/docs/Web/XPath
 author:
-- Tim Bielawa (@tbielawa)
-- Magnus Hedemark (@magnus919)
-- Dag Wieers (@dagwieers)
-'''
+  - Tim Bielawa (@tbielawa)
+  - Magnus Hedemark (@magnus919)
+  - Dag Wieers (@dagwieers)
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 # Consider the following XML file:
 #
 # <business type="bar">
@@ -194,7 +164,7 @@ EXAMPLES = r'''
   community.general.xml:
     path: /foo/bar.xml
     xpath: /business/rating
-    value: 11
+    value: "11"  # must quote to ensure it is parsed as string
 
 # Retrieve and display the number of nodes
 - name: Get count of 'beers' nodes
@@ -219,9 +189,9 @@ EXAMPLES = r'''
     path: /foo/bar.xml
     xpath: /business/beers
     add_children:
-    - beer: Old Rasputin
-    - beer: Old Motor Oil
-    - beer: Old Curmudgeon
+      - beer: Old Rasputin
+      - beer: Old Motor Oil
+      - beer: Old Curmudgeon
 
 - name: Add several more beers to the 'beers' element and add them before the 'Rochefort 10' element
   community.general.xml:
@@ -229,9 +199,9 @@ EXAMPLES = r'''
     xpath: '/business/beers/beer[text()="Rochefort 10"]'
     insertbefore: true
     add_children:
-    - beer: Old Rasputin
-    - beer: Old Motor Oil
-    - beer: Old Curmudgeon
+      - beer: Old Rasputin
+      - beer: Old Motor Oil
+      - beer: Old Curmudgeon
 
 # NOTE: The 'state' defaults to 'present' and 'value' defaults to 'null' for elements
 - name: Add a 'validxhtml' element to the 'website' element
@@ -301,14 +271,16 @@ EXAMPLES = r'''
     xpath: /business
     add_children:
       - building:
-          # Attributes
+# Attributes
           name: Scumm bar
           location: Monkey island
+          # Value
+          +value: unreal
           # Subnodes
           _:
             - floor: Pirate hall
             - floor: Grog storage
-            - construction_date: "1990"  # Only strings are valid
+            - construction_date: "1990" # Only strings are valid
       - building: Grog factory
 
 # Consider this XML for following example -
@@ -327,133 +299,115 @@ EXAMPLES = r'''
     path: bar.xml
     xpath: /config/element[@name='test1']
     state: absent
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 actions:
-    description: A dictionary with the original xpath, namespaces and state.
-    type: dict
-    returned: success
-    sample: {xpath: xpath, namespaces: [namespace1, namespace2], state=present}
-backup_file:
-    description: The name of the backup file that was created
-    type: str
-    returned: when O(backup=true)
-    sample: /path/to/file.xml.1942.2017-08-24@14:16:01~
+  description: A dictionary with the original xpath, namespaces and state.
+  type: dict
+  returned: success
+  sample:
+    {
+      "xpath": "xpath",
+      "namespaces": [
+        "namespace1",
+        "namespace2"
+      ],
+      "state": "present"
+    }
 count:
-    description: The count of xpath matches.
-    type: int
-    returned: when parameter 'count' is set
-    sample: 2
+  description: The count of xpath matches.
+  type: int
+  returned: when parameter O(count) is set
+  sample: 2
 matches:
-    description: The xpath matches found.
-    type: list
-    returned: when parameter 'print_match' is set
-msg:
-    description: A message related to the performed action(s).
-    type: str
-    returned: always
+  description: The xpath matches found.
+  type: list
+  returned: when parameter O(print_match) is set, or when parameter O(content) is set
 xmlstring:
-    description: An XML string of the resulting output.
-    type: str
-    returned: when parameter 'xmlstring' is set
-'''
+  description: An XML string of the resulting output.
+  type: str
+  returned: when parameter O(xmlstring) is set
+"""
 
 import copy
-import json
-import os
 import re
 import traceback
-
+from collections.abc import MutableMapping
 from io import BytesIO
 
-from ansible_collections.community.general.plugins.module_utils.version import LooseVersion
+from ansible.module_utils.basic import AnsibleModule, json_dict_bytes_to_unicode
+from ansible.module_utils.common.text.converters import to_bytes
 
-LXML_IMP_ERR = None
+from ansible_collections.community.general.plugins.module_utils._xml import (
+    check_lxml,
+    collect_element_attr,
+    collect_element_text,
+    get_common_argument_spec,
+    get_matches,
+    is_node,
+    parse_xml_doc,
+    validate_xpath,
+    xpath_matches,
+)
+
 try:
     from lxml import etree, objectify
-    HAS_LXML = True
 except ImportError:
-    LXML_IMP_ERR = traceback.format_exc()
-    HAS_LXML = False
-
-from ansible.module_utils.basic import AnsibleModule, json_dict_bytes_to_unicode, missing_required_lib
-from ansible.module_utils.six import iteritems, string_types
-from ansible.module_utils.common.text.converters import to_bytes, to_native
-from ansible.module_utils.common._collections_compat import MutableMapping
+    pass
 
 _IDENT = r"[a-zA-Z-][a-zA-Z0-9_\-\.]*"
-_NSIDENT = _IDENT + "|" + _IDENT + ":" + _IDENT
+_NSIDENT = f"{_IDENT}|{_IDENT}:{_IDENT}"
 # Note: we can't reasonably support the 'if you need to put both ' and " in a string, concatenate
 # strings wrapped by the other delimiter' XPath trick, especially as simple XPath.
 _XPSTR = "('(?:.*)'|\"(?:.*)\")"
 
-_RE_SPLITSIMPLELAST = re.compile("^(.*)/(" + _NSIDENT + ")$")
-_RE_SPLITSIMPLELASTEQVALUE = re.compile("^(.*)/(" + _NSIDENT + ")/text\\(\\)=" + _XPSTR + "$")
-_RE_SPLITSIMPLEATTRLAST = re.compile("^(.*)/(@(?:" + _NSIDENT + "))$")
-_RE_SPLITSIMPLEATTRLASTEQVALUE = re.compile("^(.*)/(@(?:" + _NSIDENT + "))=" + _XPSTR + "$")
-_RE_SPLITSUBLAST = re.compile("^(.*)/(" + _NSIDENT + ")\\[(.*)\\]$")
+_RE_SPLITSIMPLELAST = re.compile(f"^(.*)/({_NSIDENT})$")
+_RE_SPLITSIMPLELASTEQVALUE = re.compile(f"^(.*)/({_NSIDENT}" + ")/text\\(\\)=" + _XPSTR + "$")
+_RE_SPLITSIMPLEATTRLAST = re.compile(f"^(.*)/(@(?:{_NSIDENT}))$")
+_RE_SPLITSIMPLEATTRLASTEQVALUE = re.compile(f"^(.*)/(@(?:{_NSIDENT}))={_XPSTR}$")
+_RE_SPLITSUBLAST = re.compile(f"^(.*)/({_NSIDENT}" + ")\\[(.*)\\]$")
 _RE_SPLITONLYEQVALUE = re.compile("^(.*)/text\\(\\)=" + _XPSTR + "$")
 
 
 def has_changed(doc):
     orig_obj = etree.tostring(objectify.fromstring(etree.tostring(orig_doc)))
     obj = etree.tostring(objectify.fromstring(etree.tostring(doc)))
-    return (orig_obj != obj)
+    return orig_obj != obj
 
 
 def do_print_match(module, tree, xpath, namespaces):
-    match = tree.xpath(xpath, namespaces=namespaces)
-    match_xpaths = []
-    for m in match:
-        match_xpaths.append(tree.getpath(m))
-    match_str = json.dumps(match_xpaths)
-    msg = "selector '%s' match: %s" % (xpath, match_str)
-    finish(module, tree, xpath, namespaces, changed=False, msg=msg)
+    match_xpaths, msg = get_matches(tree, xpath, namespaces)
+    finish(module, tree, xpath, namespaces, changed=False, msg=msg, matches=match_xpaths)
 
 
 def count_nodes(module, tree, xpath, namespaces):
-    """ Return the count of nodes matching the xpath """
-    hits = tree.xpath("count(/%s)" % xpath, namespaces=namespaces)
-    msg = "found %d nodes" % hits
-    finish(module, tree, xpath, namespaces, changed=False, msg=msg, hitcount=int(hits))
-
-
-def is_node(tree, xpath, namespaces):
-    """ Test if a given xpath matches anything and if that match is a node.
-
-    For now we just assume you're only searching for one specific thing."""
-    if xpath_matches(tree, xpath, namespaces):
-        # OK, it found something
-        match = tree.xpath(xpath, namespaces=namespaces)
-        if isinstance(match[0], etree._Element):
-            return True
-
-    return False
+    """Return the count of nodes matching the xpath"""
+    hits = int(tree.xpath(f"count(/{xpath})", namespaces=namespaces))
+    msg = f"found {hits} nodes"
+    finish(module, tree, xpath, namespaces, changed=False, msg=msg, hitcount=hits)
 
 
 def is_attribute(tree, xpath, namespaces):
-    """ Test if a given xpath matches and that match is an attribute
+    """Test if a given xpath matches and that match is an attribute
 
     An xpath attribute search will only match one item"""
+
+    # lxml 5.1.1 removed etree._ElementStringResult, so we can no longer simply assume it is there
+    # (https://github.com/lxml/lxml/commit/eba79343d0e7ad1ce40169f60460cdd4caa29eb3)
+    ElementStringResult = getattr(etree, "_ElementStringResult", None)
+
     if xpath_matches(tree, xpath, namespaces):
         match = tree.xpath(xpath, namespaces=namespaces)
-        if isinstance(match[0], etree._ElementStringResult):
+        if isinstance(match[0], etree._ElementUnicodeResult):
             return True
-        elif isinstance(match[0], etree._ElementUnicodeResult):
+        elif ElementStringResult is not None and isinstance(match[0], ElementStringResult):  # pylint: disable=isinstance-second-argument-not-valid-type
             return True
-    return False
-
-
-def xpath_matches(tree, xpath, namespaces):
-    """ Test if a node exists """
-    if tree.xpath(xpath, namespaces=namespaces):
-        return True
     return False
 
 
 def delete_xpath_target(module, tree, xpath, namespaces):
-    """ Delete an attribute or element from a tree """
+    """Delete an attribute or element from a tree"""
     changed = False
     try:
         for result in tree.xpath(xpath, namespaces=namespaces):
@@ -472,7 +426,7 @@ def delete_xpath_target(module, tree, xpath, namespaces):
             else:
                 raise Exception("Impossible error")
     except Exception as e:
-        module.fail_json(msg="Couldn't delete xpath target: %s (%s)" % (xpath, e))
+        module.fail_json(msg=f"Couldn't delete xpath target: {xpath} ({e})")
     else:
         finish(module, tree, xpath, namespaces, changed=changed)
 
@@ -571,7 +525,7 @@ def split_xpath_last(xpath):
     m = _RE_SPLITSUBLAST.match(xpath)
     if m:
         content = [x.strip() for x in m.group(3).split(" and ")]
-        return (m.group(1), [('/' + m.group(2), content)])
+        return (m.group(1), [(f"/{m.group(2)}", content)])
 
     m = _RE_SPLITONLYEQVALUE.match(xpath)
     if m:
@@ -583,8 +537,7 @@ def split_xpath_last(xpath):
 def nsnameToClark(name, namespaces):
     if ":" in name:
         (nsname, rawname) = name.split(":")
-        # return "{{%s}}%s" % (namespaces[nsname], rawname)
-        return "{{{0}}}{1}".format(namespaces[nsname], rawname)
+        return f"{{{namespaces[nsname]}}}{rawname}"
 
     # no namespace name here
     return name
@@ -593,8 +546,9 @@ def nsnameToClark(name, namespaces):
 def check_or_make_target(module, tree, xpath, namespaces):
     (inner_xpath, changes) = split_xpath_last(xpath)
     if (inner_xpath == xpath) or (changes is None):
-        module.fail_json(msg="Can't process Xpath %s in order to spawn nodes! tree is %s" %
-                             (xpath, etree.tostring(tree, pretty_print=True)))
+        module.fail_json(
+            msg=f"Can't process Xpath {xpath} in order to spawn nodes! tree is {etree.tostring(tree, pretty_print=True)}"
+        )
         return False
 
     changed = False
@@ -604,8 +558,8 @@ def check_or_make_target(module, tree, xpath, namespaces):
 
     # we test again after calling check_or_make_target
     if is_node(tree, inner_xpath, namespaces) and changes:
-        for (eoa, eoa_value) in changes:
-            if eoa and eoa[0] != '@' and eoa[0] != '/':
+        for eoa, eoa_value in changes:
+            if eoa and eoa[0] != "@" and eoa[0] != "/":
                 # implicitly creating an element
                 new_kids = children_to_nodes(module, [nsnameToClark(eoa, namespaces)], "yaml")
                 if eoa_value:
@@ -616,7 +570,7 @@ def check_or_make_target(module, tree, xpath, namespaces):
                     node.extend(new_kids)
                     changed = True
                 # module.fail_json(msg="now tree=%s" % etree.tostring(tree, pretty_print=True))
-            elif eoa and eoa[0] == '/':
+            elif eoa and eoa[0] == "/":
                 element = eoa[1:]
                 new_kids = children_to_nodes(module, [nsnameToClark(element, namespaces)], "yaml")
                 for node in tree.xpath(inner_xpath, namespaces=namespaces):
@@ -625,21 +579,21 @@ def check_or_make_target(module, tree, xpath, namespaces):
                         for subexpr in eoa_value:
                             # module.fail_json(msg="element=%s subexpr=%s node=%s now tree=%s" %
                             #                      (element, subexpr, etree.tostring(node, pretty_print=True), etree.tostring(tree, pretty_print=True))
-                            check_or_make_target(module, nk, "./" + subexpr, namespaces)
+                            check_or_make_target(module, nk, f"./{subexpr}", namespaces)
                     changed = True
 
                 # module.fail_json(msg="now tree=%s" % etree.tostring(tree, pretty_print=True))
             elif eoa == "":
                 for node in tree.xpath(inner_xpath, namespaces=namespaces):
-                    if (node.text != eoa_value):
+                    if node.text != eoa_value:
                         node.text = eoa_value
                         changed = True
 
-            elif eoa and eoa[0] == '@':
+            elif eoa and eoa[0] == "@":
                 attribute = nsnameToClark(eoa[1:], namespaces)
 
                 for element in tree.xpath(inner_xpath, namespaces=namespaces):
-                    changing = (attribute not in element.attrib or element.attrib[attribute] != eoa_value)
+                    changing = attribute not in element.attrib or element.attrib[attribute] != eoa_value
 
                     if changing:
                         changed = changed or changing
@@ -653,7 +607,7 @@ def check_or_make_target(module, tree, xpath, namespaces):
                     #       (xpath, changing, etree.tostring(tree, changing, element[attribute], pretty_print=True)))
 
             else:
-                module.fail_json(msg="unknown tree transformation=%s" % etree.tostring(tree, pretty_print=True))
+                module.fail_json(msg=f"unknown tree transformation={etree.tostring(tree, pretty_print=True)}")
 
     return changed
 
@@ -667,11 +621,13 @@ def ensure_xpath_exists(module, tree, xpath, namespaces):
     finish(module, tree, xpath, namespaces, changed)
 
 
-def set_target_inner(module, tree, xpath, namespaces, attribute, value):
+def set_target_inner(module, tree, xpath, namespaces, attribute, value, create_if_missing=True):
     changed = False
 
     try:
         if not is_node(tree, xpath, namespaces):
+            if not create_if_missing:
+                return changed
             changed = check_or_make_target(module, tree, xpath, namespaces)
     except Exception as e:
         missing_namespace = ""
@@ -679,12 +635,33 @@ def set_target_inner(module, tree, xpath, namespaces, attribute, value):
         # TODO: Implement a more robust check to check for child namespaces' existence
         if tree.getroot().nsmap and ":" not in xpath:
             missing_namespace = "XML document has namespace(s) defined, but no namespace prefix(es) used in xpath!\n"
-        module.fail_json(msg="%sXpath %s causes a failure: %s\n  -- tree is %s" %
-                             (missing_namespace, xpath, e, etree.tostring(tree, pretty_print=True)), exception=traceback.format_exc())
+        module.fail_json(
+            msg=f"{missing_namespace}Xpath {xpath} causes a failure: {e}\n  -- tree is {etree.tostring(tree, pretty_print=True)}",
+            exception=traceback.format_exc(),
+        )
 
     if not is_node(tree, xpath, namespaces):
-        module.fail_json(msg="Xpath %s does not reference a node! tree is %s" %
-                             (xpath, etree.tostring(tree, pretty_print=True)))
+        module.fail_json(
+            msg=f"Xpath {xpath} does not reference a node! tree is {etree.tostring(tree, pretty_print=True)}"
+        )
+
+    if not isinstance(value, str):
+        target = f"attribute '{attribute}' at xpath '{xpath}'" if attribute else f"element text at xpath '{xpath}'"
+        module.fail_json(
+            msg=(
+                f"A non-string value {value!r} was parsed for {target}. "
+                "YAML values for booleans, octals, floats may not yield the string you intended. "
+                """Quote the value to be explicit, like `value: "yes"`."""
+            )
+        )
+
+    if attribute and ":" in attribute:
+        attr_ns, attr_name = attribute.split(":", 1)
+        if attr_ns not in namespaces:
+            module.fail_json(
+                msg=f"Namespace prefix '{attr_ns}' used in attribute '{attribute}' is not defined in the 'namespaces' parameter"
+            )
+        attribute = f"{{{namespaces[attr_ns]}}}{attr_name}"
 
     for element in tree.xpath(xpath, namespaces=namespaces):
         if not attribute:
@@ -693,87 +670,77 @@ def set_target_inner(module, tree, xpath, namespaces, attribute, value):
                 element.text = value
         else:
             changed = changed or (element.get(attribute) != value)
-            if ":" in attribute:
-                attr_ns, attr_name = attribute.split(":")
-                # attribute = "{{%s}}%s" % (namespaces[attr_ns], attr_name)
-                attribute = "{{{0}}}{1}".format(namespaces[attr_ns], attr_name)
             if element.get(attribute) != value:
                 element.set(attribute, value)
 
     return changed
 
 
-def set_target(module, tree, xpath, namespaces, attribute, value):
-    changed = set_target_inner(module, tree, xpath, namespaces, attribute, value)
+def set_target(module, tree, xpath, namespaces, attribute, value, create_if_missing):
+    changed = set_target_inner(module, tree, xpath, namespaces, attribute, value, create_if_missing)
     finish(module, tree, xpath, namespaces, changed)
 
 
 def get_element_text(module, tree, xpath, namespaces):
-    if not is_node(tree, xpath, namespaces):
-        module.fail_json(msg="Xpath %s does not reference a node!" % xpath)
-
-    elements = []
-    for element in tree.xpath(xpath, namespaces=namespaces):
-        elements.append({element.tag: element.text})
-
+    raw = collect_element_text(tree, xpath, namespaces)
+    if raw is None:
+        module.fail_json(msg=f"Xpath {xpath} does not reference a node!")
+    elements = [{tag: text} for tag, text in raw]
     finish(module, tree, xpath, namespaces, changed=False, msg=len(elements), hitcount=len(elements), matches=elements)
 
 
 def get_element_attr(module, tree, xpath, namespaces):
-    if not is_node(tree, xpath, namespaces):
-        module.fail_json(msg="Xpath %s does not reference a node!" % xpath)
-
-    elements = []
-    for element in tree.xpath(xpath, namespaces=namespaces):
-        child = {}
-        for key in element.keys():
-            value = element.get(key)
-            child.update({key: value})
-        elements.append({element.tag: child})
-
+    raw = collect_element_attr(tree, xpath, namespaces)
+    if raw is None:
+        module.fail_json(msg=f"Xpath {xpath} does not reference a node!")
+    elements = [{tag: attribs} for tag, attribs in raw]
     finish(module, tree, xpath, namespaces, changed=False, msg=len(elements), hitcount=len(elements), matches=elements)
 
 
 def child_to_element(module, child, in_type):
-    if in_type == 'xml':
-        infile = BytesIO(to_bytes(child, errors='surrogate_or_strict'))
+    if in_type == "xml":
+        infile = BytesIO(to_bytes(child, errors="surrogate_or_strict"))
 
         try:
             parser = etree.XMLParser()
             node = etree.parse(infile, parser)
             return node.getroot()
         except etree.XMLSyntaxError as e:
-            module.fail_json(msg="Error while parsing child element: %s" % e)
-    elif in_type == 'yaml':
-        if isinstance(child, string_types):
+            module.fail_json(msg=f"Error while parsing child element: {e}")
+    elif in_type == "yaml":
+        if isinstance(child, str):
             return etree.Element(child)
         elif isinstance(child, MutableMapping):
             if len(child) > 1:
                 module.fail_json(msg="Can only create children from hashes with one key")
 
-            (key, value) = next(iteritems(child))
+            (key, value) = list(child.items())[0]
             if isinstance(value, MutableMapping):
-                children = value.pop('_', None)
+                children = value.pop("_", None)
+                child_value = value.pop("+value", None)
 
                 node = etree.Element(key, value)
 
                 if children is not None:
                     if not isinstance(children, list):
-                        module.fail_json(msg="Invalid children type: %s, must be list." % type(children))
+                        module.fail_json(msg=f"Invalid children type: {type(children)}, must be list.")
 
                     subnodes = children_to_nodes(module, children)
                     node.extend(subnodes)
+
+                if child_value is not None:
+                    node.text = child_value
             else:
                 node = etree.Element(key)
                 node.text = value
             return node
         else:
-            module.fail_json(msg="Invalid child type: %s. Children must be either strings or hashes." % type(child))
+            module.fail_json(msg=f"Invalid child type: {type(child)}. Children must be either strings or hashes.")
     else:
-        module.fail_json(msg="Invalid child input type: %s. Type must be either xml or yaml." % in_type)
+        module.fail_json(msg=f"Invalid child input type: {in_type}. Type must be either xml or yaml.")
 
 
-def children_to_nodes(module=None, children=None, type='yaml'):
+def children_to_nodes(module=None, children=None, type="yaml"):
     """turn a str/hash/list of str&hash into a list of elements"""
     children = [] if children is None else children
 
@@ -781,166 +748,183 @@ def children_to_nodes(module=None, children=None, type='yaml'):
 
 
 def make_pretty(module, tree):
-    xml_string = etree.tostring(tree, xml_declaration=True, encoding='UTF-8', pretty_print=module.params['pretty_print'])
+    buf = BytesIO()
+    tree.write(
+        buf,
+        xml_declaration=True,
+        encoding="UTF-8",
+        pretty_print=module.params["pretty_print"],
+        doctype=tree.docinfo.doctype or None,
+    )
+    xml_string = buf.getvalue()
 
     result = dict(
         changed=False,
     )
 
-    if module.params['path']:
-        xml_file = module.params['path']
-        with open(xml_file, 'rb') as xml_content:
+    if module.params["path"]:
+        xml_file = module.params["path"]
+        with open(xml_file, "rb") as xml_content:
             if xml_string != xml_content.read():
-                result['changed'] = True
+                result["changed"] = True
                 if not module.check_mode:
-                    if module.params['backup']:
-                        result['backup_file'] = module.backup_local(module.params['path'])
-                    tree.write(xml_file, xml_declaration=True, encoding='UTF-8', pretty_print=module.params['pretty_print'])
+                    if module.params["backup"]:
+                        result["backup_file"] = module.backup_local(module.params["path"])
+                    tree.write(
+                        xml_file,
+                        xml_declaration=True,
+                        encoding="UTF-8",
+                        pretty_print=module.params["pretty_print"],
+                        doctype=tree.docinfo.doctype or None,
+                    )
 
-    elif module.params['xmlstring']:
-        result['xmlstring'] = xml_string
+    elif module.params["xmlstring"]:
+        result["xmlstring"] = xml_string
         # NOTE: Modifying a string is not considered a change !
-        if xml_string != module.params['xmlstring']:
-            result['changed'] = True
+        if xml_string != module.params["xmlstring"]:
+            result["changed"] = True
 
     module.exit_json(**result)
 
 
-def finish(module, tree, xpath, namespaces, changed=False, msg='', hitcount=0, matches=tuple()):
-
+def finish(module, tree, xpath, namespaces, changed=False, msg="", hitcount=0, matches=tuple()):
     result = dict(
-        actions=dict(
-            xpath=xpath,
-            namespaces=namespaces,
-            state=module.params['state']
-        ),
+        actions=dict(xpath=xpath, namespaces=namespaces, state=module.params["state"]),
         changed=has_changed(tree),
     )
 
-    if module.params['count'] or hitcount:
-        result['count'] = hitcount
+    if module.params["count"] or hitcount:
+        result["count"] = hitcount
 
-    if module.params['print_match'] or matches:
-        result['matches'] = matches
+    if module.params["print_match"] or matches:
+        result["matches"] = matches
 
     if msg:
-        result['msg'] = msg
+        result["msg"] = msg
 
-    if result['changed']:
+    if result["changed"]:
         if module._diff:
-            result['diff'] = dict(
-                before=etree.tostring(orig_doc, xml_declaration=True, encoding='UTF-8', pretty_print=True),
-                after=etree.tostring(tree, xml_declaration=True, encoding='UTF-8', pretty_print=True),
+            before_buf = BytesIO()
+            orig_doc.write(
+                before_buf,
+                xml_declaration=True,
+                encoding="UTF-8",
+                pretty_print=True,
+                doctype=orig_doc.docinfo.doctype or None,
+            )
+            after_buf = BytesIO()
+            tree.write(
+                after_buf,
+                xml_declaration=True,
+                encoding="UTF-8",
+                pretty_print=True,
+                doctype=tree.docinfo.doctype or None,
+            )
+            result["diff"] = dict(before=before_buf.getvalue(), after=after_buf.getvalue())
+
+        if module.params["path"] and not module.check_mode:
+            if module.params["backup"]:
+                result["backup_file"] = module.backup_local(module.params["path"])
+            tree.write(
+                module.params["path"],
+                xml_declaration=True,
+                encoding="UTF-8",
+                pretty_print=module.params["pretty_print"],
+                doctype=tree.docinfo.doctype or None,
             )
 
-        if module.params['path'] and not module.check_mode:
-            if module.params['backup']:
-                result['backup_file'] = module.backup_local(module.params['path'])
-            tree.write(module.params['path'], xml_declaration=True, encoding='UTF-8', pretty_print=module.params['pretty_print'])
-
-    if module.params['xmlstring']:
-        result['xmlstring'] = etree.tostring(tree, xml_declaration=True, encoding='UTF-8', pretty_print=module.params['pretty_print'])
+    if module.params["xmlstring"]:
+        xmlstring_buf = BytesIO()
+        tree.write(
+            xmlstring_buf,
+            xml_declaration=True,
+            encoding="UTF-8",
+            pretty_print=module.params["pretty_print"],
+            doctype=tree.docinfo.doctype or None,
+        )
+        result["xmlstring"] = xmlstring_buf.getvalue()
 
     module.exit_json(**result)
 
 
 def main():
+    argument_spec = get_common_argument_spec()
+    argument_spec.update(
+        count=dict(type="bool", default=False),
+        print_match=dict(type="bool", default=False),
+        content=dict(type="str", choices=["attribute", "text"]),
+        state=dict(type="str", default="present", choices=["absent", "present"], aliases=["ensure"]),
+        value=dict(type="raw"),
+        attribute=dict(type="raw"),
+        add_children=dict(type="list", elements="raw"),
+        set_children=dict(type="list", elements="raw"),
+        pretty_print=dict(type="bool", default=False),
+        input_type=dict(type="str", default="yaml", choices=["xml", "yaml"]),
+        backup=dict(type="bool", default=False),
+        insertbefore=dict(type="bool", default=False),
+        insertafter=dict(type="bool", default=False),
+        create_if_missing=dict(type="bool", default=True),
+    )
     module = AnsibleModule(
-        argument_spec=dict(
-            path=dict(type='path', aliases=['dest', 'file']),
-            xmlstring=dict(type='str'),
-            xpath=dict(type='str'),
-            namespaces=dict(type='dict', default={}),
-            state=dict(type='str', default='present', choices=['absent', 'present'], aliases=['ensure']),
-            value=dict(type='raw'),
-            attribute=dict(type='raw'),
-            add_children=dict(type='list', elements='raw'),
-            set_children=dict(type='list', elements='raw'),
-            count=dict(type='bool', default=False),
-            print_match=dict(type='bool', default=False),
-            pretty_print=dict(type='bool', default=False),
-            content=dict(type='str', choices=['attribute', 'text']),
-            input_type=dict(type='str', default='yaml', choices=['xml', 'yaml']),
-            backup=dict(type='bool', default=False),
-            strip_cdata_tags=dict(type='bool', default=False),
-            insertbefore=dict(type='bool', default=False),
-            insertafter=dict(type='bool', default=False),
-        ),
+        argument_spec=argument_spec,
         supports_check_mode=True,
         required_by=dict(
-            add_children=['xpath'],
-            attribute=['value'],
-            content=['xpath'],
-            set_children=['xpath'],
-            value=['xpath'],
+            add_children=["xpath"],
+            attribute=["value"],
+            content=["xpath"],
+            set_children=["xpath"],
+            value=["xpath"],
         ),
         required_if=[
-            ['count', True, ['xpath']],
-            ['print_match', True, ['xpath']],
-            ['insertbefore', True, ['xpath']],
-            ['insertafter', True, ['xpath']],
+            ["count", True, ["xpath"]],
+            ["print_match", True, ["xpath"]],
+            ["insertbefore", True, ["xpath"]],
+            ["insertafter", True, ["xpath"]],
         ],
         required_one_of=[
-            ['path', 'xmlstring'],
-            ['add_children', 'content', 'count', 'pretty_print', 'print_match', 'set_children', 'value'],
+            ["path", "xmlstring"],
+            ["add_children", "content", "count", "pretty_print", "print_match", "set_children", "value"],
         ],
         mutually_exclusive=[
-            ['add_children', 'content', 'count', 'print_match', 'set_children', 'value'],
-            ['path', 'xmlstring'],
-            ['insertbefore', 'insertafter'],
+            ["add_children", "content", "count", "print_match", "set_children", "value"],
+            ["path", "xmlstring"],
+            ["insertbefore", "insertafter"],
         ],
     )
 
-    xml_file = module.params['path']
-    xml_string = module.params['xmlstring']
-    xpath = module.params['xpath']
-    namespaces = module.params['namespaces']
-    state = module.params['state']
-    value = json_dict_bytes_to_unicode(module.params['value'])
-    attribute = module.params['attribute']
-    set_children = json_dict_bytes_to_unicode(module.params['set_children'])
-    add_children = json_dict_bytes_to_unicode(module.params['add_children'])
-    pretty_print = module.params['pretty_print']
-    content = module.params['content']
-    input_type = module.params['input_type']
-    print_match = module.params['print_match']
-    count = module.params['count']
-    backup = module.params['backup']
-    strip_cdata_tags = module.params['strip_cdata_tags']
-    insertbefore = module.params['insertbefore']
-    insertafter = module.params['insertafter']
+    xml_file = module.params["path"]
+    xml_string = module.params["xmlstring"]
+    xpath = module.params["xpath"]
+    namespaces = module.params["namespaces"]
+    state = module.params["state"]
+    value = json_dict_bytes_to_unicode(module.params["value"])
+    attribute = module.params["attribute"]
+    set_children = json_dict_bytes_to_unicode(module.params["set_children"])
+    add_children = json_dict_bytes_to_unicode(module.params["add_children"])
+    pretty_print = module.params["pretty_print"]
+    content = module.params["content"]
+    input_type = module.params["input_type"]
+    print_match = module.params["print_match"]
+    count = module.params["count"]
+    strip_cdata_tags = module.params["strip_cdata_tags"]
+    huge_tree = module.params["huge_tree"]
+    insertbefore = module.params["insertbefore"]
+    insertafter = module.params["insertafter"]
+    create_if_missing = module.params["create_if_missing"]
 
-    # Check if we have lxml 2.3.0 or newer installed
-    if not HAS_LXML:
-        module.fail_json(msg=missing_required_lib("lxml"), exception=LXML_IMP_ERR)
-    elif LooseVersion('.'.join(to_native(f) for f in etree.LXML_VERSION)) < LooseVersion('2.3.0'):
-        module.fail_json(msg='The xml ansible module requires lxml 2.3.0 or newer installed on the managed machine')
-    elif LooseVersion('.'.join(to_native(f) for f in etree.LXML_VERSION)) < LooseVersion('3.0.0'):
-        module.warn('Using lxml version lower than 3.0.0 does not guarantee predictable element attribute order.')
+    check_lxml(module)
 
-    # Check if the file exists
-    if xml_string:
-        infile = BytesIO(to_bytes(xml_string, errors='surrogate_or_strict'))
-    elif os.path.isfile(xml_file):
-        infile = open(xml_file, 'rb')
-    else:
-        module.fail_json(msg="The target XML source '%s' does not exist." % xml_file)
-
-    # Parse and evaluate xpath expression
     if xpath is not None:
-        try:
-            etree.XPath(xpath)
-        except etree.XPathSyntaxError as e:
-            module.fail_json(msg="Syntax error in xpath expression: %s (%s)" % (xpath, e))
-        except etree.XPathEvalError as e:
-            module.fail_json(msg="Evaluation error in xpath expression: %s (%s)" % (xpath, e))
+        validate_xpath(module, xpath)
 
-    # Try to parse in the target XML file
-    try:
-        parser = etree.XMLParser(remove_blank_text=pretty_print, strip_cdata=strip_cdata_tags)
-        doc = etree.parse(infile, parser)
-    except etree.XMLSyntaxError as e:
-        module.fail_json(msg="Error while parsing document: %s (%s)" % (xml_file or 'xml_string', e))
+    doc = parse_xml_doc(
+        module,
+        xml_file=xml_file,
+        xml_string=xml_string,
+        strip_cdata_tags=strip_cdata_tags,
+        huge_tree=huge_tree,
+        remove_blank_text=pretty_print,
+    )
 
     # Ensure we have the original copy to compare
     global orig_doc
@@ -952,13 +936,13 @@ def main():
     if count:
         count_nodes(module, doc, xpath, namespaces)
 
-    if content == 'attribute':
+    if content == "attribute":
         get_element_attr(module, doc, xpath, namespaces)
-    elif content == 'text':
+    elif content == "text":
         get_element_text(module, doc, xpath, namespaces)
 
     # File exists:
-    if state == 'absent':
+    if state == "absent":
         # - absent: delete xpath target
         delete_xpath_target(module, doc, xpath, namespaces)
 
@@ -979,7 +963,7 @@ def main():
 
     # Is the xpath target an attribute selector?
     if value is not None:
-        set_target(module, doc, xpath, namespaces, attribute, value)
+        set_target(module, doc, xpath, namespaces, attribute, value, create_if_missing)
 
     # If an xpath was provided, we need to do something with the data
     if xpath is not None:
@@ -992,5 +976,5 @@ def main():
     module.fail_json(msg="Don't know what to do")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

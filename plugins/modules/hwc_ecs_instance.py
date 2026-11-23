@@ -1,241 +1,202 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2019 Huawei
 # GNU General Public License v3.0+ (see LICENSES/GPL-3.0-or-later.txt or https://www.gnu.org/licenses/gpl-3.0.txt)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 ###############################################################################
 # Documentation
 ###############################################################################
 
-DOCUMENTATION = '''
----
+DOCUMENTATION = r"""
 module: hwc_ecs_instance
 description:
-    - instance management.
+  - Instance management.
 short_description: Creates a resource of Ecs/Instance in Huawei Cloud
 version_added: '0.2.0'
 author: Huawei Inc. (@huaweicloud)
 requirements:
-    - keystoneauth1 >= 3.6.0
+  - keystoneauth1 >= 3.6.0
 attributes:
-    check_mode:
-        support: full
-    diff_mode:
-        support: none
+  check_mode:
+    support: full
+  diff_mode:
+    support: none
 options:
-    state:
-        description:
-            - Whether the given object should exist in Huawei Cloud.
-        type: str
-        choices: ['present', 'absent']
-        default: 'present'
-    timeouts:
-        description:
-            - The timeouts for each operations.
-        type: dict
-        default: {}
-        suboptions:
-            create:
-                description:
-                    - The timeouts for create operation.
-                type: str
-                default: '30m'
-            update:
-                description:
-                    - The timeouts for update operation.
-                type: str
-                default: '30m'
-            delete:
-                description:
-                    - The timeouts for delete operation.
-                type: str
-                default: '30m'
-    availability_zone:
-        description:
-            - Specifies the name of the AZ where the ECS is located.
-        type: str
-        required: true
-    flavor_name:
-        description:
-            - Specifies the name of the system flavor.
-        type: str
-        required: true
-    image_id:
-        description:
-            - Specifies the ID of the system image.
-        type: str
-        required: true
-    name:
-        description:
-            - Specifies the ECS name. Value requirements consists of 1 to 64
-              characters, including letters, digits, underscores (V(_)), hyphens
-              (V(-)), periods (V(.)).
-        type: str
-        required: true
-    nics:
-        description:
-            - Specifies the NIC information of the ECS. Constraints the
-              network of the NIC must belong to the VPC specified by vpc_id. A
-              maximum of 12 NICs can be attached to an ECS.
-        type: list
-        elements: dict
-        required: true
-        suboptions:
-            ip_address:
-                description:
-                    - Specifies the IP address of the NIC. The value is an IPv4
-                      address. Its value must be an unused IP
-                      address in the network segment of the subnet.
-                type: str
-                required: true
-            subnet_id:
-                description:
-                    - Specifies the ID of subnet.
-                type: str
-                required: true
-    root_volume:
-        description:
-            - Specifies the configuration of the ECS's system disks.
-        type: dict
-        required: true
-        suboptions:
-            volume_type:
-                description:
-                    - Specifies the ECS system disk type.
-                    - SATA is common I/O disk type.
-                    - SAS is high I/O disk type.
-                    - SSD is ultra-high I/O disk type.
-                    - co-p1 is high I/O (performance-optimized I) disk type.
-                    - uh-l1 is ultra-high I/O (latency-optimized) disk type.
-                    - NOTE is For HANA, HL1, and HL2 ECSs, use co-p1 and uh-l1
-                      disks. For other ECSs, do not use co-p1 or uh-l1 disks.
-                type: str
-                required: true
-            size:
-                description:
-                    - Specifies the system disk size, in GB. The value range is
-                      1 to 1024. The system disk size must be
-                      greater than or equal to the minimum system disk size
-                      supported by the image (min_disk attribute of the image).
-                      If this parameter is not specified or is set to 0, the
-                      default system disk size is the minimum value of the
-                      system disk in the image (min_disk attribute of the
-                      image).
-                type: int
-                required: false
-            snapshot_id:
-                description:
-                    - Specifies the snapshot ID or ID of the original data disk
-                      contained in the full-ECS image.
-                type: str
-                required: false
-    vpc_id:
-        description:
-            - Specifies the ID of the VPC to which the ECS belongs.
-        type: str
-        required: true
-    admin_pass:
-        description:
-            - Specifies the initial login password of the administrator account
-              for logging in to an ECS using password authentication. The Linux
-              administrator is root, and the Windows administrator is
-              Administrator. Password complexity requirements, consists of 8 to
-              26 characters. The password must contain at least three of the
-              following character types 'uppercase letters, lowercase letters,
-              digits, and special characters (!@$%^-_=+[{}]:,./?)'. The password
-              cannot contain the username or the username in reverse. The
-              Windows ECS password cannot contain the username, the username in
-              reverse, or more than two consecutive characters in the username.
-        type: str
-        required: false
-    data_volumes:
-        description:
-            - Specifies the data disks of ECS instance.
-        type: list
-        elements: dict
-        required: false
-        suboptions:
-            volume_id:
-                description:
-                    - Specifies the disk ID.
-                type: str
-                required: true
-            device:
-                description:
-                    - Specifies the disk device name.
-                type: str
-                required: false
+  state:
     description:
+      - Whether the given object should exist in Huawei Cloud.
+    type: str
+    choices: ['present', 'absent']
+    default: 'present'
+  timeouts:
+    description:
+      - The timeouts for each operations.
+    type: dict
+    default: {}
+    suboptions:
+      create:
         description:
-            - Specifies the description of an ECS, which is a null string by
-              default. Can contain a maximum of 85 characters. Cannot contain
-              special characters, such as < and >.
+          - The timeouts for create operation.
         type: str
-        required: false
-    eip_id:
+        default: '30m'
+      update:
         description:
-            - Specifies the ID of the elastic IP address assigned to the ECS.
-              Only elastic IP addresses in the DOWN state can be
-              assigned.
+          - The timeouts for update operation.
         type: str
-        required: false
-    enable_auto_recovery:
+        default: '30m'
+      delete:
         description:
-            - Specifies whether automatic recovery is enabled on the ECS.
-        type: bool
-        required: false
-    enterprise_project_id:
-        description:
-            - Specifies the ID of the enterprise project to which the ECS
-              belongs.
+          - The timeouts for delete operation.
         type: str
-        required: false
-    security_groups:
+        default: '30m'
+  availability_zone:
+    description:
+      - Specifies the name of the AZ where the ECS is located.
+    type: str
+    required: true
+  flavor_name:
+    description:
+      - Specifies the name of the system flavor.
+    type: str
+    required: true
+  image_id:
+    description:
+      - Specifies the ID of the system image.
+    type: str
+    required: true
+  name:
+    description:
+      - Specifies the ECS name. Value requirements consists of 1 to 64 characters, including letters, digits, underscores
+        (V(_)), hyphens (V(-)), periods (V(.)).
+    type: str
+    required: true
+  nics:
+    description:
+      - Specifies the NIC information of the ECS. Constraints the network of the NIC must belong to the VPC specified by vpc_id.
+        A maximum of 12 NICs can be attached to an ECS.
+    type: list
+    elements: dict
+    required: true
+    suboptions:
+      ip_address:
         description:
-            - Specifies the security groups of the ECS. If this
-              parameter is left blank, the default security group is bound to
-              the ECS by default.
-        type: list
-        elements: str
-        required: false
-    server_metadata:
-        description:
-            - Specifies the metadata of ECS to be created.
-        type: dict
-        required: false
-    server_tags:
-        description:
-            - Specifies the tags of an ECS. When you create ECSs, one ECS
-              supports up to 10 tags.
-        type: dict
-        required: false
-    ssh_key_name:
-        description:
-            - Specifies the name of the SSH key used for logging in to the ECS.
+          - Specifies the IP address of the NIC. The value is an IPv4 address. Its value must be an unused IP address in the
+            network segment of the subnet.
         type: str
-        required: false
-    user_data:
+        required: true
+      subnet_id:
         description:
-            - Specifies the user data to be injected during the ECS creation
-              process. Text, text files, and gzip files can be injected.
-              The content to be injected must be encoded with
-              base64. The maximum size of the content to be injected (before
-              encoding) is 32 KB. For Linux ECSs, this parameter does not take
-              effect when adminPass is used.
+          - Specifies the ID of subnet.
         type: str
-        required: false
+        required: true
+  root_volume:
+    description:
+      - Specifies the configuration of the ECS's system disks.
+    type: dict
+    required: true
+    suboptions:
+      volume_type:
+        description:
+          - Specifies the ECS system disk type.
+          - SATA is common I/O disk type.
+          - SAS is high I/O disk type.
+          - SSD is ultra-high I/O disk type.
+          - Co-p1 is high I/O (performance-optimized I) disk type.
+          - Uh-l1 is ultra-high I/O (latency-optimized) disk type.
+          - NOTE is For HANA, HL1, and HL2 ECSs, use co-p1 and uh-l1 disks. For other ECSs, do not use co-p1 or uh-l1 disks.
+        type: str
+        required: true
+      size:
+        description:
+          - Specifies the system disk size, in GB. The value range is 1 to 1024. The system disk size must be greater than
+            or equal to the minimum system disk size supported by the image (min_disk attribute of the image). If this parameter
+            is not specified or is set to 0, the default system disk size is the minimum value of the system disk in the image
+            (min_disk attribute of the image).
+        type: int
+      snapshot_id:
+        description:
+          - Specifies the snapshot ID or ID of the original data disk contained in the full-ECS image.
+        type: str
+  vpc_id:
+    description:
+      - Specifies the ID of the VPC to which the ECS belongs.
+    type: str
+    required: true
+  admin_pass:
+    description:
+      - Specifies the initial login password of the administrator account for logging in to an ECS using password authentication.
+        The Linux administrator is root, and the Windows administrator is Administrator. Password complexity requirements,
+        consists of 8 to 26 characters. The password must contain at least three of the following character types 'uppercase
+        letters, lowercase letters, digits, and special characters (V(!@$%^-_=+[{}]:,./?))'. The password cannot contain the
+        username or the username in reverse. The Windows ECS password cannot contain the username, the username in reverse,
+        or more than two consecutive characters in the username.
+    type: str
+  data_volumes:
+    description:
+      - Specifies the data disks of ECS instance.
+    type: list
+    elements: dict
+    suboptions:
+      volume_id:
+        description:
+          - Specifies the disk ID.
+        type: str
+        required: true
+      device:
+        description:
+          - Specifies the disk device name.
+        type: str
+  description:
+    description:
+      - Specifies the description of an ECS, which is a null string by default. Can contain a maximum of 85 characters. Cannot
+        contain special characters, such as V(<) and V(>).
+    type: str
+  eip_id:
+    description:
+      - Specifies the ID of the elastic IP address assigned to the ECS. Only elastic IP addresses in the DOWN state can be
+        assigned.
+    type: str
+  enable_auto_recovery:
+    description:
+      - Specifies whether automatic recovery is enabled on the ECS.
+    type: bool
+  enterprise_project_id:
+    description:
+      - Specifies the ID of the enterprise project to which the ECS belongs.
+    type: str
+  security_groups:
+    description:
+      - Specifies the security groups of the ECS. If this parameter is left blank, the default security group is bound to
+        the ECS by default.
+    type: list
+    elements: str
+  server_metadata:
+    description:
+      - Specifies the metadata of ECS to be created.
+    type: dict
+  server_tags:
+    description:
+      - Specifies the tags of an ECS. When you create ECSs, one ECS supports up to 10 tags.
+    type: dict
+  ssh_key_name:
+    description:
+      - Specifies the name of the SSH key used for logging in to the ECS.
+    type: str
+  user_data:
+    description:
+      - Specifies the user data to be injected during the ECS creation process. Text, text files, and gzip files can be injected.
+        The content to be injected must be encoded with base64. The maximum size of the content to be injected (before encoding)
+        is 32 KB. For Linux ECSs, this parameter does not take effect when adminPass is used.
+    type: str
 extends_documentation_fragment:
-  - community.general.hwc
-  - community.general.attributes
+  - community.general._hwc
+  - community.general._attributes
+"""
 
-'''
-
-EXAMPLES = '''
+EXAMPLES = r"""
 # create an ecs instance
 - name: Create a vpc
   hwc_network_vpc:
@@ -285,285 +246,276 @@ EXAMPLES = '''
     vpc_id: "{{ vpc.id }}"
     root_volume:
       volume_type: "SAS"
-'''
+"""
 
-RETURN = '''
-    availability_zone:
-        description:
-            - Specifies the name of the AZ where the ECS is located.
-        type: str
-        returned: success
-    flavor_name:
-        description:
-            - Specifies the name of the system flavor.
-        type: str
-        returned: success
-    image_id:
-        description:
-            - Specifies the ID of the system image.
-        type: str
-        returned: success
-    name:
-        description:
-            - Specifies the ECS name. Value requirements "Consists of 1 to 64
-              characters, including letters, digits, underscores (V(_)), hyphens
-              (V(-)), periods (V(.)).".
-        type: str
-        returned: success
-    nics:
-        description:
-            - Specifies the NIC information of the ECS. The
-              network of the NIC must belong to the VPC specified by vpc_id. A
-              maximum of 12 NICs can be attached to an ECS.
-        type: list
-        returned: success
-        contains:
-            ip_address:
-                description:
-                    - Specifies the IP address of the NIC. The value is an IPv4
-                      address. Its value must be an unused IP
-                      address in the network segment of the subnet.
-                type: str
-                returned: success
-            subnet_id:
-                description:
-                    - Specifies the ID of subnet.
-                type: str
-                returned: success
-            port_id:
-                description:
-                    - Specifies the port ID corresponding to the IP address.
-                type: str
-                returned: success
-    root_volume:
-        description:
-            - Specifies the configuration of the ECS's system disks.
-        type: dict
-        returned: success
-        contains:
-            volume_type:
-                description:
-                    - Specifies the ECS system disk type.
-                    - SATA is common I/O disk type.
-                    - SAS is high I/O disk type.
-                    - SSD is ultra-high I/O disk type.
-                    - co-p1 is high I/O (performance-optimized I) disk type.
-                    - uh-l1 is ultra-high I/O (latency-optimized) disk type.
-                    - NOTE is For HANA, HL1, and HL2 ECSs, use co-p1 and uh-l1
-                      disks. For other ECSs, do not use co-p1 or uh-l1 disks.
-                type: str
-                returned: success
-            size:
-                description:
-                    - Specifies the system disk size, in GB. The value range is
-                      1 to 1024. The system disk size must be
-                      greater than or equal to the minimum system disk size
-                      supported by the image (min_disk attribute of the image).
-                      If this parameter is not specified or is set to 0, the
-                      default system disk size is the minimum value of the
-                      system disk in the image (min_disk attribute of the
-                      image).
-                type: int
-                returned: success
-            snapshot_id:
-                description:
-                    - Specifies the snapshot ID or ID of the original data disk
-                      contained in the full-ECS image.
-                type: str
-                returned: success
-            device:
-                description:
-                    - Specifies the disk device name.
-                type: str
-                returned: success
-            volume_id:
-                description:
-                    - Specifies the disk ID.
-                type: str
-                returned: success
-    vpc_id:
-        description:
-            - Specifies the ID of the VPC to which the ECS belongs.
-        type: str
-        returned: success
-    admin_pass:
-        description:
-            - Specifies the initial login password of the administrator account
-              for logging in to an ECS using password authentication. The Linux
-              administrator is root, and the Windows administrator is
-              Administrator. Password complexity requirements consists of 8 to
-              26 characters. The password must contain at least three of the
-              following character types "uppercase letters, lowercase letters,
-              digits, and special characters (!@$%^-_=+[{}]:,./?)". The password
-              cannot contain the username or the username in reverse. The
-              Windows ECS password cannot contain the username, the username in
-              reverse, or more than two consecutive characters in the username.
-        type: str
-        returned: success
-    data_volumes:
-        description:
-            - Specifies the data disks of ECS instance.
-        type: list
-        returned: success
-        contains:
-            volume_id:
-                description:
-                    - Specifies the disk ID.
-                type: str
-                returned: success
-            device:
-                description:
-                    - Specifies the disk device name.
-                type: str
-                returned: success
-    description:
-        description:
-            - Specifies the description of an ECS, which is a null string by
-              default. Can contain a maximum of 85 characters. Cannot contain
-              special characters, such as < and >.
-        type: str
-        returned: success
-    eip_id:
-        description:
-            - Specifies the ID of the elastic IP address assigned to the ECS.
-              Only elastic IP addresses in the DOWN state can be assigned.
-        type: str
-        returned: success
-    enable_auto_recovery:
-        description:
-            - Specifies whether automatic recovery is enabled on the ECS.
-        type: bool
-        returned: success
-    enterprise_project_id:
-        description:
-            - Specifies the ID of the enterprise project to which the ECS
-              belongs.
-        type: str
-        returned: success
-    security_groups:
-        description:
-            - Specifies the security groups of the ECS. If this parameter is left
-              blank, the default security group is bound to the ECS by default.
-        type: list
-        returned: success
-    server_metadata:
-        description:
-            - Specifies the metadata of ECS to be created.
-        type: dict
-        returned: success
-    server_tags:
-        description:
-            - Specifies the tags of an ECS. When you create ECSs, one ECS
-              supports up to 10 tags.
-        type: dict
-        returned: success
-    ssh_key_name:
-        description:
-            - Specifies the name of the SSH key used for logging in to the ECS.
-        type: str
-        returned: success
-    user_data:
-        description:
-            - Specifies the user data to be injected during the ECS creation
-              process. Text, text files, and gzip files can be injected.
-              The content to be injected must be encoded with base64. The maximum
-              size of the content to be injected (before encoding) is 32 KB. For
-              Linux ECSs, this parameter does not take effect when adminPass is
-              used.
-        type: str
-        returned: success
-    config_drive:
-        description:
-            - Specifies the configuration driver.
-        type: str
-        returned: success
-    created:
-        description:
-            - Specifies the time when an ECS was created.
-        type: str
-        returned: success
-    disk_config_type:
-        description:
-            - Specifies the disk configuration type. MANUAL is The image
-              space is not expanded. AUTO is the image space of the system disk
-              will be expanded to be as same as the flavor.
-        type: str
-        returned: success
-    host_name:
-        description:
-            - Specifies the host name of the ECS.
-        type: str
-        returned: success
-    image_name:
-        description:
-            - Specifies the image name of the ECS.
-        type: str
-        returned: success
-    power_state:
-        description:
-            - Specifies the power status of the ECS.
-        type: int
-        returned: success
-    server_alias:
-        description:
-            - Specifies the ECS alias.
-        type: str
-        returned: success
-    status:
-        description:
-            - Specifies the ECS status. Options are ACTIVE, REBOOT, HARD_REBOOT,
-              REBUILD, MIGRATING, BUILD, SHUTOFF, RESIZE, VERIFY_RESIZE, ERROR,
-              and DELETED.
-        type: str
-        returned: success
-'''
+RETURN = r"""
+availability_zone:
+  description:
+    - Specifies the name of the AZ where the ECS is located.
+  type: str
+  returned: success
+flavor_name:
+  description:
+    - Specifies the name of the system flavor.
+  type: str
+  returned: success
+image_id:
+  description:
+    - Specifies the ID of the system image.
+  type: str
+  returned: success
+name:
+  description:
+    - Specifies the ECS name. Value requirements "Consists of 1 to 64 characters, including letters, digits, underscores (V(_)),
+      hyphens (V(-)), periods (V(.)).".
+  type: str
+  returned: success
+nics:
+  description:
+    - Specifies the NIC information of the ECS. The network of the NIC must belong to the VPC specified by vpc_id. A maximum
+      of 12 NICs can be attached to an ECS.
+  type: list
+  returned: success
+  contains:
+    ip_address:
+      description:
+        - Specifies the IP address of the NIC. The value is an IPv4 address. Its value must be an unused IP address in the
+          network segment of the subnet.
+      type: str
+      returned: success
+    subnet_id:
+      description:
+        - Specifies the ID of subnet.
+      type: str
+      returned: success
+    port_id:
+      description:
+        - Specifies the port ID corresponding to the IP address.
+      type: str
+      returned: success
+root_volume:
+  description:
+    - Specifies the configuration of the ECS's system disks.
+  type: dict
+  returned: success
+  contains:
+    volume_type:
+      description:
+        - Specifies the ECS system disk type.
+        - SATA is common I/O disk type.
+        - SAS is high I/O disk type.
+        - SSD is ultra-high I/O disk type.
+        - Co-p1 is high I/O (performance-optimized I) disk type.
+        - Uh-l1 is ultra-high I/O (latency-optimized) disk type.
+        - NOTE is For HANA, HL1, and HL2 ECSs, use co-p1 and uh-l1 disks. For other ECSs, do not use co-p1 or uh-l1 disks.
+      type: str
+      returned: success
+    size:
+      description:
+        - Specifies the system disk size, in GB. The value range is 1 to 1024. The system disk size must be greater than or
+          equal to the minimum system disk size supported by the image (min_disk attribute of the image). If this parameter
+          is not specified or is set to 0, the default system disk size is the minimum value of the system disk in the image
+          (min_disk attribute of the image).
+      type: int
+      returned: success
+    snapshot_id:
+      description:
+        - Specifies the snapshot ID or ID of the original data disk contained in the full-ECS image.
+      type: str
+      returned: success
+    device:
+      description:
+        - Specifies the disk device name.
+      type: str
+      returned: success
+    volume_id:
+      description:
+        - Specifies the disk ID.
+      type: str
+      returned: success
+vpc_id:
+  description:
+    - Specifies the ID of the VPC to which the ECS belongs.
+  type: str
+  returned: success
+admin_pass:
+  description:
+    - Specifies the initial login password of the administrator account for logging in to an ECS using password authentication.
+      The Linux administrator is root, and the Windows administrator is Administrator. Password complexity requirements consists
+      of 8 to 26 characters. The password must contain at least three of the following character types "uppercase letters,
+      lowercase letters, digits, and special characters (!@$%^-_=+[{}]:,./?)". The password cannot contain the username or
+      the username in reverse. The Windows ECS password cannot contain the username, the username in reverse, or more than
+      two consecutive characters in the username.
+  type: str
+  returned: success
+data_volumes:
+  description:
+    - Specifies the data disks of ECS instance.
+  type: list
+  returned: success
+  contains:
+    volume_id:
+      description:
+        - Specifies the disk ID.
+      type: str
+      returned: success
+    device:
+      description:
+        - Specifies the disk device name.
+      type: str
+      returned: success
+description:
+  description:
+    - Specifies the description of an ECS, which is a null string by default. Can contain a maximum of 85 characters. Cannot
+      contain special characters, such as < and >.
+  type: str
+  returned: success
+eip_id:
+  description:
+    - Specifies the ID of the elastic IP address assigned to the ECS. Only elastic IP addresses in the DOWN state can be assigned.
+  type: str
+  returned: success
+enable_auto_recovery:
+  description:
+    - Specifies whether automatic recovery is enabled on the ECS.
+  type: bool
+  returned: success
+enterprise_project_id:
+  description:
+    - Specifies the ID of the enterprise project to which the ECS belongs.
+  type: str
+  returned: success
+security_groups:
+  description:
+    - Specifies the security groups of the ECS. If this parameter is left blank, the default security group is bound to the
+      ECS by default.
+  type: list
+  returned: success
+server_metadata:
+  description:
+    - Specifies the metadata of ECS to be created.
+  type: dict
+  returned: success
+server_tags:
+  description:
+    - Specifies the tags of an ECS. When you create ECSs, one ECS supports up to 10 tags.
+  type: dict
+  returned: success
+ssh_key_name:
+  description:
+    - Specifies the name of the SSH key used for logging in to the ECS.
+  type: str
+  returned: success
+user_data:
+  description:
+    - Specifies the user data to be injected during the ECS creation process. Text, text files, and gzip files can be injected.
+      The content to be injected must be encoded with base64. The maximum size of the content to be injected (before encoding)
+      is 32 KB. For Linux ECSs, this parameter does not take effect when adminPass is used.
+  type: str
+  returned: success
+config_drive:
+  description:
+    - Specifies the configuration driver.
+  type: str
+  returned: success
+created:
+  description:
+    - Specifies the time when an ECS was created.
+  type: str
+  returned: success
+disk_config_type:
+  description:
+    - Specifies the disk configuration type. MANUAL is The image space is not expanded. AUTO is the image space of the system
+      disk is expanded to be as same as the flavor.
+  type: str
+  returned: success
+host_name:
+  description:
+    - Specifies the host name of the ECS.
+  type: str
+  returned: success
+image_name:
+  description:
+    - Specifies the image name of the ECS.
+  type: str
+  returned: success
+power_state:
+  description:
+    - Specifies the power status of the ECS.
+  type: int
+  returned: success
+server_alias:
+  description:
+    - Specifies the ECS alias.
+  type: str
+  returned: success
+status:
+  description:
+    - Specifies the ECS status. Options are ACTIVE, REBOOT, HARD_REBOOT, REBUILD, MIGRATING, BUILD, SHUTOFF, RESIZE, VERIFY_RESIZE,
+      ERROR, and DELETED.
+  type: str
+  returned: success
+"""
 
-from ansible_collections.community.general.plugins.module_utils.hwc_utils import (
-    Config, HwcClientException, HwcModule, are_different_dicts, build_path,
-    get_region, is_empty_value, navigate_value, wait_to_finish)
+from ansible_collections.community.general.plugins.module_utils._hwc_utils import (
+    Config,
+    HwcClientException,
+    HwcModule,
+    are_different_dicts,
+    build_path,
+    get_region,
+    is_empty_value,
+    navigate_value,
+    wait_to_finish,
+)
 
 
 def build_module():
     return HwcModule(
         argument_spec=dict(
-            state=dict(default='present', choices=['present', 'absent'],
-                       type='str'),
-            timeouts=dict(type='dict', options=dict(
-                create=dict(default='30m', type='str'),
-                update=dict(default='30m', type='str'),
-                delete=dict(default='30m', type='str'),
-            ), default=dict()),
-            availability_zone=dict(type='str', required=True),
-            flavor_name=dict(type='str', required=True),
-            image_id=dict(type='str', required=True),
-            name=dict(type='str', required=True),
-            nics=dict(
-                type='list', required=True, elements='dict',
+            state=dict(default="present", choices=["present", "absent"], type="str"),
+            timeouts=dict(
+                type="dict",
                 options=dict(
-                    ip_address=dict(type='str', required=True),
-                    subnet_id=dict(type='str', required=True)
+                    create=dict(default="30m", type="str"),
+                    update=dict(default="30m", type="str"),
+                    delete=dict(default="30m", type="str"),
+                ),
+                default=dict(),
+            ),
+            availability_zone=dict(type="str", required=True),
+            flavor_name=dict(type="str", required=True),
+            image_id=dict(type="str", required=True),
+            name=dict(type="str", required=True),
+            nics=dict(
+                type="list",
+                required=True,
+                elements="dict",
+                options=dict(ip_address=dict(type="str", required=True), subnet_id=dict(type="str", required=True)),
+            ),
+            root_volume=dict(
+                type="dict",
+                required=True,
+                options=dict(
+                    volume_type=dict(type="str", required=True), size=dict(type="int"), snapshot_id=dict(type="str")
                 ),
             ),
-            root_volume=dict(type='dict', required=True, options=dict(
-                volume_type=dict(type='str', required=True),
-                size=dict(type='int'),
-                snapshot_id=dict(type='str')
-            )),
-            vpc_id=dict(type='str', required=True),
-            admin_pass=dict(type='str', no_log=True),
-            data_volumes=dict(type='list', elements='dict', options=dict(
-                volume_id=dict(type='str', required=True),
-                device=dict(type='str')
-            )),
-            description=dict(type='str'),
-            eip_id=dict(type='str'),
-            enable_auto_recovery=dict(type='bool'),
-            enterprise_project_id=dict(type='str'),
-            security_groups=dict(type='list', elements='str'),
-            server_metadata=dict(type='dict'),
-            server_tags=dict(type='dict'),
-            ssh_key_name=dict(type='str'),
-            user_data=dict(type='str')
+            vpc_id=dict(type="str", required=True),
+            admin_pass=dict(type="str", no_log=True),
+            data_volumes=dict(
+                type="list",
+                elements="dict",
+                options=dict(volume_id=dict(type="str", required=True), device=dict(type="str")),
+            ),
+            description=dict(type="str"),
+            eip_id=dict(type="str"),
+            enable_auto_recovery=dict(type="bool"),
+            enterprise_project_id=dict(type="str"),
+            security_groups=dict(type="list", elements="str"),
+            server_metadata=dict(type="dict"),
+            server_tags=dict(type="dict"),
+            ssh_key_name=dict(type="str"),
+            user_data=dict(type="str"),
         ),
         supports_check_mode=True,
     )
@@ -577,11 +529,11 @@ def main():
 
     try:
         _init(config)
-        is_exist = module.params['id']
+        is_exist = module.params["id"]
 
         result = None
         changed = False
-        if module.params['state'] == 'present':
+        if module.params["state"] == "present":
             if not is_exist:
                 if not module.check_mode:
                     create(config)
@@ -600,12 +552,11 @@ def main():
                     result = build_state(inputv, resp, array_index)
                     set_readonly_options(inputv, result)
                     if are_different_dicts(inputv, result):
-                        raise Exception("Update resource failed, "
-                                        "some attributes are not updated")
+                        raise Exception("Update resource failed, some attributes are not updated")
 
                 changed = True
 
-            result['id'] = module.params.get('id')
+            result["id"] = module.params["id"]
         else:
             result = dict()
             if is_exist:
@@ -617,54 +568,51 @@ def main():
         module.fail_json(msg=str(ex))
 
     else:
-        result['changed'] = changed
+        result["changed"] = changed
         module.exit_json(**result)
 
 
 def _init(config):
     module = config.module
-    if module.params['id']:
+    if module.params["id"]:
         return
 
     v = search_resource(config)
     n = len(v)
     if n > 1:
-        raise Exception("Found more than one resource(%s)" % ", ".join([
-            navigate_value(i, ["id"])
-            for i in v
-        ]))
+        raise Exception(f"Found more than one resource({', '.join([navigate_value(i, ['id']) for i in v])})")
 
     if n == 1:
-        module.params['id'] = navigate_value(v[0], ["id"])
+        module.params["id"] = navigate_value(v[0], ["id"])
 
 
 def user_input_parameters(module):
     return {
-        "admin_pass": module.params.get("admin_pass"),
-        "availability_zone": module.params.get("availability_zone"),
-        "data_volumes": module.params.get("data_volumes"),
-        "description": module.params.get("description"),
-        "eip_id": module.params.get("eip_id"),
-        "enable_auto_recovery": module.params.get("enable_auto_recovery"),
-        "enterprise_project_id": module.params.get("enterprise_project_id"),
-        "flavor_name": module.params.get("flavor_name"),
-        "image_id": module.params.get("image_id"),
-        "name": module.params.get("name"),
-        "nics": module.params.get("nics"),
-        "root_volume": module.params.get("root_volume"),
-        "security_groups": module.params.get("security_groups"),
-        "server_metadata": module.params.get("server_metadata"),
-        "server_tags": module.params.get("server_tags"),
-        "ssh_key_name": module.params.get("ssh_key_name"),
-        "user_data": module.params.get("user_data"),
-        "vpc_id": module.params.get("vpc_id"),
+        "admin_pass": module.params["admin_pass"],
+        "availability_zone": module.params["availability_zone"],
+        "data_volumes": module.params["data_volumes"],
+        "description": module.params["description"],
+        "eip_id": module.params["eip_id"],
+        "enable_auto_recovery": module.params["enable_auto_recovery"],
+        "enterprise_project_id": module.params["enterprise_project_id"],
+        "flavor_name": module.params["flavor_name"],
+        "image_id": module.params["image_id"],
+        "name": module.params["name"],
+        "nics": module.params["nics"],
+        "root_volume": module.params["root_volume"],
+        "security_groups": module.params["security_groups"],
+        "server_metadata": module.params["server_metadata"],
+        "server_tags": module.params["server_tags"],
+        "ssh_key_name": module.params["ssh_key_name"],
+        "user_data": module.params["user_data"],
+        "vpc_id": module.params["vpc_id"],
     }
 
 
 def create(config):
     module = config.module
     client = config.client(get_region(module), "ecs", "project")
-    timeout = 60 * int(module.params['timeouts']['create'].rstrip('m'))
+    timeout = 60 * int(module.params["timeouts"]["create"].rstrip("m"))
     opts = user_input_parameters(module)
     opts["ansible_module"] = module
 
@@ -684,14 +632,14 @@ def create(config):
             break
     else:
         raise Exception("Can't find the sub job")
-    module.params['id'] = navigate_value(obj, ["entities", "server_id"])
+    module.params["id"] = navigate_value(obj, ["entities", "server_id"])
 
 
 def update(config, expect_state, current_state):
     module = config.module
     expect_state["current_state"] = current_state
     current_state["current_state"] = current_state
-    timeout = 60 * int(module.params['timeouts']['update'].rstrip('m'))
+    timeout = 60 * int(module.params["timeouts"]["update"].rstrip("m"))
     client = config.client(get_region(module), "ecs", "project")
 
     params = build_delete_nics_parameters(expect_state)
@@ -719,7 +667,7 @@ def update(config, expect_state, current_state):
 def delete(config):
     module = config.module
     client = config.client(get_region(module), "ecs", "project")
-    timeout = 60 * int(module.params['timeouts']['delete'].rstrip('m'))
+    timeout = 60 * int(module.params["timeouts"]["delete"].rstrip("m"))
 
     opts = user_input_parameters(module)
     opts["ansible_module"] = module
@@ -796,17 +744,15 @@ def _build_query_link(opts):
 
     v = navigate_value(opts, ["enterprise_project_id"])
     if v or v in [False, 0]:
-        query_params.append(
-            "enterprise_project_id=" + (str(v) if v else str(v).lower()))
+        query_params.append(f"enterprise_project_id={str(v) if v else str(v).lower()}")
 
     v = navigate_value(opts, ["name"])
     if v or v in [False, 0]:
-        query_params.append(
-            "name=" + (str(v) if v else str(v).lower()))
+        query_params.append(f"name={str(v) if v else str(v).lower()}")
 
     query_link = "?limit=10&offset={offset}"
     if query_params:
-        query_link += "&" + "&".join(query_params)
+        query_link += f"&{'&'.join(query_params)}"
 
     return query_link
 
@@ -817,10 +763,10 @@ def search_resource(config):
     opts = user_input_parameters(module)
     identity_obj = _build_identity_object(opts)
     query_link = _build_query_link(opts)
-    link = "cloudservers/detail" + query_link
+    link = f"cloudservers/detail{query_link}"
 
     result = []
-    p = {'offset': 1}
+    p = {"offset": 1}
     while True:
         url = link.format(**p)
         r = send_list_request(module, client, url)
@@ -836,7 +782,7 @@ def search_resource(config):
         if len(result) > 1:
             break
 
-        p['offset'] += 1
+        p["offset"] += 1
 
     return result
 
@@ -883,8 +829,7 @@ def send_delete_nics_request(module, params, client):
     try:
         r = client.post(url, params)
     except HwcClientException as ex:
-        msg = ("module(hwc_ecs_instance): error running "
-               "api(delete_nics), error: %s" % str(ex))
+        msg = f"module(hwc_ecs_instance): error running api(delete_nics), error: {ex}"
         module.fail_json(msg=msg)
 
     return r
@@ -911,8 +856,7 @@ def send_set_auto_recovery_request(module, params, client):
     try:
         r = client.put(url, params)
     except HwcClientException as ex:
-        msg = ("module(hwc_ecs_instance): error running "
-               "api(set_auto_recovery), error: %s" % str(ex))
+        msg = f"module(hwc_ecs_instance): error running api(set_auto_recovery), error: {ex}"
         module.fail_json(msg=msg)
 
     return r
@@ -1016,8 +960,7 @@ def expand_create_nics(d, array_index):
 
     req = []
 
-    v = navigate_value(
-        d, ["nics"], new_ai)
+    v = navigate_value(d, ["nics"], new_ai)
 
     if not v:
         return req
@@ -1099,8 +1042,7 @@ def send_create_request(module, params, client):
     try:
         r = client.post(url, params)
     except HwcClientException as ex:
-        msg = ("module(hwc_ecs_instance): error running "
-               "api(create), error: %s" % str(ex))
+        msg = f"module(hwc_ecs_instance): error running api(create), error: {ex}"
         module.fail_json(msg=msg)
 
     return r
@@ -1152,8 +1094,7 @@ def send_attach_nics_request(module, params, client):
     try:
         r = client.post(url, params)
     except HwcClientException as ex:
-        msg = ("module(hwc_ecs_instance): error running "
-               "api(attach_nics), error: %s" % str(ex))
+        msg = f"module(hwc_ecs_instance): error running api(attach_nics), error: {ex}"
         module.fail_json(msg=msg)
 
     return r
@@ -1163,16 +1104,14 @@ def send_delete_volume_request(module, params, client, info):
     path_parameters = {
         "volume_id": ["volume_id"],
     }
-    data = dict((key, navigate_value(info, path))
-                for key, path in path_parameters.items())
+    data = {key: navigate_value(info, path) for key, path in path_parameters.items()}
 
     url = build_path(module, "cloudservers/{id}/detachvolume/{volume_id}", data)
 
     try:
         r = client.delete(url, params)
     except HwcClientException as ex:
-        msg = ("module(hwc_ecs_instance): error running "
-               "api(delete_volume), error: %s" % str(ex))
+        msg = f"module(hwc_ecs_instance): error running api(delete_volume), error: {ex}"
         module.fail_json(msg=msg)
 
     return r
@@ -1208,8 +1147,7 @@ def send_attach_data_disk_request(module, params, client):
     try:
         r = client.post(url, params)
     except HwcClientException as ex:
-        msg = ("module(hwc_ecs_instance): error running "
-               "api(attach_data_disk), error: %s" % str(ex))
+        msg = f"module(hwc_ecs_instance): error running api(attach_data_disk), error: {ex}"
         module.fail_json(msg=msg)
 
     return r
@@ -1236,16 +1174,14 @@ def expand_delete_servers(d, array_index):
 
     req = []
 
-    n = 1
-    for i in range(n):
-        transformed = dict()
+    transformed = dict()
 
-        v = expand_delete_servers_id(d, new_ai)
-        if not is_empty_value(v):
-            transformed["id"] = v
+    v = expand_delete_servers_id(d, new_ai)
+    if not is_empty_value(v):
+        transformed["id"] = v
 
-        if transformed:
-            req.append(transformed)
+    if transformed:
+        req.append(transformed)
 
     return req
 
@@ -1259,8 +1195,7 @@ def send_delete_request(module, params, client):
     try:
         r = client.post(url, params)
     except HwcClientException as ex:
-        msg = ("module(hwc_ecs_instance): error running "
-               "api(delete), error: %s" % str(ex))
+        msg = f"module(hwc_ecs_instance): error running api(delete), error: {ex}"
         module.fail_json(msg=msg)
 
     return r
@@ -1285,13 +1220,9 @@ def async_wait(config, result, client, timeout):
             return None, ""
 
     try:
-        return wait_to_finish(
-            ["SUCCESS"],
-            ["RUNNING", "INIT"],
-            _query_status, timeout)
+        return wait_to_finish(["SUCCESS"], ["RUNNING", "INIT"], _query_status, timeout)
     except Exception as ex:
-        module.fail_json(msg="module(hwc_ecs_instance): error "
-                             "waiting to be done, error= %s" % str(ex))
+        module.fail_json(msg=f"module(hwc_ecs_instance): error waiting to be done, error= {ex}")
 
 
 def multi_invoke_delete_volume(config, opts, client, timeout):
@@ -1302,11 +1233,7 @@ def multi_invoke_delete_volume(config, opts, client, timeout):
     current = opts["current_state"]["data_volumes"]
     if expect and current:
         v = [i["volume_id"] for i in expect]
-        opts1 = {
-            "data_volumes": [
-                i for i in current if i["volume_id"] not in v
-            ]
-        }
+        opts1 = {"data_volumes": [i for i in current if i["volume_id"] not in v]}
 
     loop_val = navigate_value(opts1, ["data_volumes"])
     if not loop_val:
@@ -1325,11 +1252,7 @@ def multi_invoke_attach_data_disk(config, opts, client, timeout):
     current = opts["current_state"]["data_volumes"]
     if expect and current:
         v = [i["volume_id"] for i in current]
-        opts1 = {
-            "data_volumes": [
-                i for i in expect if i["volume_id"] not in v
-            ]
-        }
+        opts1 = {"data_volumes": [i for i in expect if i["volume_id"] not in v]}
 
     loop_val = navigate_value(opts1, ["data_volumes"])
     if not loop_val:
@@ -1348,8 +1271,7 @@ def send_read_request(module, client):
     try:
         r = client.get(url)
     except HwcClientException as ex:
-        msg = ("module(hwc_ecs_instance): error running "
-               "api(read), error: %s" % str(ex))
+        msg = f"module(hwc_ecs_instance): error running api(read), error: {ex}"
         module.fail_json(msg=msg)
 
     return navigate_value(r, ["server"], None)
@@ -1360,13 +1282,11 @@ def fill_read_resp_body(body):
 
     result["OS-DCF:diskConfig"] = body.get("OS-DCF:diskConfig")
 
-    result["OS-EXT-AZ:availability_zone"] = body.get(
-        "OS-EXT-AZ:availability_zone")
+    result["OS-EXT-AZ:availability_zone"] = body.get("OS-EXT-AZ:availability_zone")
 
     result["OS-EXT-SRV-ATTR:hostname"] = body.get("OS-EXT-SRV-ATTR:hostname")
 
-    result["OS-EXT-SRV-ATTR:instance_name"] = body.get(
-        "OS-EXT-SRV-ATTR:instance_name")
+    result["OS-EXT-SRV-ATTR:instance_name"] = body.get("OS-EXT-SRV-ATTR:instance_name")
 
     result["OS-EXT-SRV-ATTR:user_data"] = body.get("OS-EXT-SRV-ATTR:user_data")
 
@@ -1398,8 +1318,7 @@ def fill_read_resp_body(body):
 
     result["name"] = body.get("name")
 
-    v = fill_read_resp_os_extended_volumes_volumes_attached(
-        body.get("os-extended-volumes:volumes_attached"))
+    v = fill_read_resp_os_extended_volumes_volumes_attached(body.get("os-extended-volumes:volumes_attached"))
     result["os-extended-volumes:volumes_attached"] = v
 
     v = fill_read_resp_root_volume(body.get("root_volume"))
@@ -1505,8 +1424,7 @@ def send_read_auto_recovery_request(module, client):
     try:
         r = client.get(url)
     except HwcClientException as ex:
-        msg = ("module(hwc_ecs_instance): error running "
-               "api(read_auto_recovery), error: %s" % str(ex))
+        msg = f"module(hwc_ecs_instance): error running api(read_auto_recovery), error: {ex}"
         module.fail_json(msg=msg)
 
     return r
@@ -1523,8 +1441,7 @@ def fill_read_auto_recovery_resp_body(body):
 def flatten_options(response, array_index):
     r = dict()
 
-    v = navigate_value(
-        response, ["read", "OS-EXT-AZ:availability_zone"], array_index)
+    v = navigate_value(response, ["read", "OS-EXT-AZ:availability_zone"], array_index)
     r["availability_zone"] = v
 
     v = navigate_value(response, ["read", "config_drive"], array_index)
@@ -1545,22 +1462,19 @@ def flatten_options(response, array_index):
     v = flatten_enable_auto_recovery(response, array_index)
     r["enable_auto_recovery"] = v
 
-    v = navigate_value(
-        response, ["read", "enterprise_project_id"], array_index)
+    v = navigate_value(response, ["read", "enterprise_project_id"], array_index)
     r["enterprise_project_id"] = v
 
     v = navigate_value(response, ["read", "flavor", "id"], array_index)
     r["flavor_name"] = v
 
-    v = navigate_value(
-        response, ["read", "OS-EXT-SRV-ATTR:hostname"], array_index)
+    v = navigate_value(response, ["read", "OS-EXT-SRV-ATTR:hostname"], array_index)
     r["host_name"] = v
 
     v = navigate_value(response, ["read", "image", "id"], array_index)
     r["image_id"] = v
 
-    v = navigate_value(
-        response, ["read", "metadata", "image_name"], array_index)
+    v = navigate_value(response, ["read", "metadata", "image_name"], array_index)
     r["image_name"] = v
 
     v = navigate_value(response, ["read", "name"], array_index)
@@ -1569,15 +1483,13 @@ def flatten_options(response, array_index):
     v = flatten_nics(response, array_index)
     r["nics"] = v
 
-    v = navigate_value(
-        response, ["read", "OS-EXT-STS:power_state"], array_index)
+    v = navigate_value(response, ["read", "OS-EXT-STS:power_state"], array_index)
     r["power_state"] = v
 
     v = flatten_root_volume(response, array_index)
     r["root_volume"] = v
 
-    v = navigate_value(
-        response, ["read", "OS-EXT-SRV-ATTR:instance_name"], array_index)
+    v = navigate_value(response, ["read", "OS-EXT-SRV-ATTR:instance_name"], array_index)
     r["server_alias"] = v
 
     v = flatten_server_tags(response, array_index)
@@ -1589,8 +1501,7 @@ def flatten_options(response, array_index):
     v = navigate_value(response, ["read", "status"], array_index)
     r["status"] = v
 
-    v = navigate_value(
-        response, ["read", "OS-EXT-SRV-ATTR:user_data"], array_index)
+    v = navigate_value(response, ["read", "OS-EXT-SRV-ATTR:user_data"], array_index)
     r["user_data"] = v
 
     v = navigate_value(response, ["read", "metadata", "vpc_id"], array_index)
@@ -1600,8 +1511,7 @@ def flatten_options(response, array_index):
 
 
 def flatten_data_volumes(d, array_index):
-    v = navigate_value(d, ["read", "os-extended-volumes:volumes_attached"],
-                       array_index)
+    v = navigate_value(d, ["read", "os-extended-volumes:volumes_attached"], array_index)
     if not v:
         return None
     n = len(v)
@@ -1616,12 +1526,10 @@ def flatten_data_volumes(d, array_index):
 
         val = dict()
 
-        v = navigate_value(
-            d, ["read", "os-extended-volumes:volumes_attached", "device"], new_ai)
+        v = navigate_value(d, ["read", "os-extended-volumes:volumes_attached", "device"], new_ai)
         val["device"] = v
 
-        v = navigate_value(
-            d, ["read", "os-extended-volumes:volumes_attached", "id"], new_ai)
+        v = navigate_value(d, ["read", "os-extended-volumes:volumes_attached", "id"], new_ai)
         val["volume_id"] = v
 
         for v in val.values():
@@ -1633,14 +1541,12 @@ def flatten_data_volumes(d, array_index):
 
 
 def flatten_enable_auto_recovery(d, array_index):
-    v = navigate_value(d, ["read_auto_recovery", "support_auto_recovery"],
-                       array_index)
+    v = navigate_value(d, ["read_auto_recovery", "support_auto_recovery"], array_index)
     return v == "true"
 
 
 def flatten_nics(d, array_index):
-    v = navigate_value(d, ["read", "address"],
-                       array_index)
+    v = navigate_value(d, ["read", "address"], array_index)
     if not v:
         return None
     n = len(v)
@@ -1658,8 +1564,7 @@ def flatten_nics(d, array_index):
         v = navigate_value(d, ["read", "address", "addr"], new_ai)
         val["ip_address"] = v
 
-        v = navigate_value(
-            d, ["read", "address", "OS-EXT-IPS:port_id"], new_ai)
+        v = navigate_value(d, ["read", "address", "OS-EXT-IPS:port_id"], new_ai)
         val["port_id"] = v
 
         for v in val.values():
@@ -1742,8 +1647,7 @@ def adjust_data_volumes(parent_input, parent_cur):
                 result.append(cv[i])
 
     if len(result) != lcv:
-        raise Exception("adjust property(data_volumes) failed, "
-                        "the array number is not equal")
+        raise Exception("adjust property(data_volumes) failed, the array number is not equal")
 
     parent_cur["data_volumes"] = result
 
@@ -1786,8 +1690,7 @@ def adjust_nics(parent_input, parent_cur):
                 result.append(cv[i])
 
     if len(result) != lcv:
-        raise Exception("adjust property(nics) failed, "
-                        "the array number is not equal")
+        raise Exception("adjust property(nics) failed, the array number is not equal")
 
     parent_cur["nics"] = result
 
@@ -1797,11 +1700,9 @@ def set_unreadable_options(opts, states):
 
     states["eip_id"] = opts.get("eip_id")
 
-    set_unread_nics(
-        opts.get("nics"), states.get("nics"))
+    set_unread_nics(opts.get("nics"), states.get("nics"))
 
-    set_unread_root_volume(
-        opts.get("root_volume"), states.get("root_volume"))
+    set_unread_root_volume(opts.get("root_volume"), states.get("root_volume"))
 
     states["security_groups"] = opts.get("security_groups")
 
@@ -1864,13 +1765,11 @@ def set_readonly_options(opts, states):
 
     opts["image_name"] = states.get("image_name")
 
-    set_readonly_nics(
-        opts.get("nics"), states.get("nics"))
+    set_readonly_nics(opts.get("nics"), states.get("nics"))
 
     opts["power_state"] = states.get("power_state")
 
-    set_readonly_root_volume(
-        opts.get("root_volume"), states.get("root_volume"))
+    set_readonly_root_volume(opts.get("root_volume"), states.get("root_volume"))
 
     opts["server_alias"] = states.get("server_alias")
 
@@ -1921,13 +1820,11 @@ def set_readonly_root_volume(inputv, curv):
 
 
 def send_list_request(module, client, url):
-
     r = None
     try:
         r = client.get(url)
     except HwcClientException as ex:
-        msg = ("module(hwc_ecs_instance): error running "
-               "api(list), error: %s" % str(ex))
+        msg = f"module(hwc_ecs_instance): error running api(list), error: {ex}"
         module.fail_json(msg=msg)
 
     return navigate_value(r, ["servers"], None)
@@ -2026,7 +1923,7 @@ def expand_list_tags(d, array_index):
     if not v:
         return None
 
-    return [k + "=" + v1 for k, v1 in v.items()]
+    return [f"{k}={v1}" for k, v1 in v.items()]
 
 
 def fill_list_resp_body(body):
@@ -2034,13 +1931,11 @@ def fill_list_resp_body(body):
 
     result["OS-DCF:diskConfig"] = body.get("OS-DCF:diskConfig")
 
-    result["OS-EXT-AZ:availability_zone"] = body.get(
-        "OS-EXT-AZ:availability_zone")
+    result["OS-EXT-AZ:availability_zone"] = body.get("OS-EXT-AZ:availability_zone")
 
     result["OS-EXT-SRV-ATTR:hostname"] = body.get("OS-EXT-SRV-ATTR:hostname")
 
-    result["OS-EXT-SRV-ATTR:instance_name"] = body.get(
-        "OS-EXT-SRV-ATTR:instance_name")
+    result["OS-EXT-SRV-ATTR:instance_name"] = body.get("OS-EXT-SRV-ATTR:instance_name")
 
     result["OS-EXT-SRV-ATTR:user_data"] = body.get("OS-EXT-SRV-ATTR:user_data")
 
@@ -2138,5 +2033,5 @@ def adjust_list_api_tags(parent_input, parent_cur):
     parent_cur["tags"] = result
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

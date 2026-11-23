@@ -1,27 +1,24 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 
 # Copyright (c) 2017, Kenneth D. Evensen <kdevensen@gmail.com>
 # GNU General Public License v3.0+ (see LICENSES/GPL-3.0-or-later.txt or https://www.gnu.org/licenses/gpl-3.0.txt)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 module: pamd
 author:
-    - Kenneth D. Evensen (@kevensen)
+  - Kenneth D. Evensen (@kevensen)
 short_description: Manage PAM Modules
 description:
   - Edit PAM service's type, control, module path and module arguments.
-  - In order for a PAM rule to be modified, the type, control and
-    module_path must match an existing rule. See man(5) pam.d for details.
+  - In order for a PAM rule to be modified, the type, control and module_path must match an existing rule. See man(5) pam.d
+    for details.
 notes:
   - This module does not handle authselect profiles.
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: full
@@ -30,8 +27,7 @@ attributes:
 options:
   name:
     description:
-      - The name generally refers to the PAM service file to
-        change, for example system-auth.
+      - The name generally refers to the PAM service file to change, for example system-auth.
     type: str
     required: true
   type:
@@ -40,12 +36,11 @@ options:
       - The O(type), O(control), and O(module_path) options all must match a rule to be modified.
     type: str
     required: true
-    choices: [ account, -account, auth, -auth, password, -password, session, -session ]
+    choices: [account, -account, auth, -auth, password, -password, session, -session]
   control:
     description:
       - The control of the PAM rule being modified.
-      - This may be a complicated control with brackets. If this is the case, be
-        sure to put "[bracketed controls]" in quotes.
+      - This may be a complicated control with brackets. If this is the case, be sure to put "[bracketed controls]" in quotes.
       - The O(type), O(control), and O(module_path) options all must match a rule to be modified.
     type: str
     required: true
@@ -57,55 +52,50 @@ options:
     required: true
   new_type:
     description:
-    - The new type to assign to the new rule.
+      - The new type to assign to the new rule.
     type: str
-    choices: [ account, -account, auth, -auth, password, -password, session, -session ]
+    choices: [account, -account, auth, -auth, password, -password, session, -session]
   new_control:
     description:
-    - The new control to assign to the new rule.
+      - The new control to assign to the new rule.
     type: str
   new_module_path:
     description:
-    - The new module path to be assigned to the new rule.
+      - The new module path to be assigned to the new rule.
     type: str
   module_arguments:
     description:
-    - When O(state=updated), the O(module_arguments) will replace existing module_arguments.
-    - When O(state=args_absent) args matching those listed in O(module_arguments) will be removed.
-    - When O(state=args_present) any args listed in O(module_arguments) are added if
-      missing from the existing rule.
-    - Furthermore, if the module argument takes a value denoted by C(=),
-      the value will be changed to that specified in module_arguments.
+      - When O(state=updated), the O(module_arguments) replace existing module_arguments.
+      - When O(state=args_absent) args matching those listed in O(module_arguments) are removed.
+      - When O(state=args_present) any args listed in O(module_arguments) are added if missing from the existing rule.
+      - Furthermore, if the module argument takes a value denoted by C(=), the value changes to that specified in module_arguments.
     type: list
     elements: str
   state:
     description:
-    - The default of V(updated) will modify an existing rule if type,
-      control and module_path all match an existing rule.
-    - With V(before), the new rule will be inserted before a rule matching type,
-      control and module_path.
-    - Similarly, with V(after), the new rule will be inserted after an existing rulematching type,
-      control and module_path.
-    - With either V(before) or V(after) O(new_type), O(new_control), and O(new_module_path) must all be specified.
-    - If state is V(args_absent) or V(args_present), O(new_type), O(new_control), and O(new_module_path) will be ignored.
-    - State V(absent) will remove the rule.
+      - The default of V(updated) modifies an existing rule if type, control and module_path all match an existing rule.
+      - With V(before), the new rule is inserted before a rule matching type, control and module_path.
+      - Similarly, with V(after), the new rule is inserted after an existing rulematching type, control and module_path.
+      - With either V(before) or V(after) O(new_type), O(new_control), and O(new_module_path) must all be specified.
+      - If state is V(args_absent) or V(args_present), O(new_type), O(new_control), and O(new_module_path) are ignored.
+      - State V(absent) removes the rule.
     type: str
-    choices: [ absent, before, after, args_absent, args_present, updated ]
+    choices: [absent, before, after, args_absent, args_present, updated]
     default: updated
   path:
     description:
-    - This is the path to the PAM service files.
+      - This is the path to the PAM service files.
     type: path
     default: /etc/pam.d
   backup:
-     description:
-       - Create a backup file including the timestamp information so you can
-         get the original file back if you somehow clobbered it incorrectly.
-     type: bool
-     default: false
-'''
+    description:
+      - Create a backup file including the timestamp information so you can get the original file back if you somehow clobbered
+        it incorrectly.
+    type: bool
+    default: false
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Update pamd rule's control in /etc/pam.d/system-auth
   community.general.pamd:
     name: system-auth
@@ -133,8 +123,7 @@ EXAMPLES = r'''
     new_module_path: pam_faillock.so
     state: before
 
-- name: Insert a new rule pam_wheel.so with argument 'use_uid' after an \
-        existing rule pam_rootok.so
+- name: Insert a new rule pam_wheel.so with argument 'use_uid' after an existing rule pam_rootok.so
   community.general.pamd:
     name: su
     type: auth
@@ -161,11 +150,7 @@ EXAMPLES = r'''
     type: auth
     control: required
     module_path: pam_faillock.so
-    module_arguments: 'preauth
-        silent
-        deny=3
-        unlock_time=604800
-        fail_interval=900'
+    module_arguments: 'preauth silent deny=3 unlock_time=604800 fail_interval=900'
     state: updated
 
 - name: Remove specific arguments from a rule
@@ -193,8 +178,8 @@ EXAMPLES = r'''
     control: '[success=1 default=ignore]'
     module_path: pam_succeed_if.so
     module_arguments:
-    - crond
-    - quiet
+      - crond
+      - quiet
     state: args_present
 
 - name: Module arguments requiring commas must be listed as a Yaml list
@@ -204,7 +189,7 @@ EXAMPLES = r'''
     control: required
     module_path: pam_access.so
     module_arguments:
-    - listsep=,
+      - listsep=,
     state: args_present
 
 - name: Update specific argument value in a rule
@@ -226,41 +211,42 @@ EXAMPLES = r'''
     type: auth
     module_path: pam_sss.so
     control: 'requisite'
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 change_count:
-    description: How many rules were changed.
-    type: int
-    sample: 1
-    returned: success
+  description: How many rules were changed.
+  type: int
+  sample: 1
+  returned: success
 backupdest:
-    description:
-    - "The file name of the backup file, if created."
-    returned: success
-    type: str
-...
-'''
+  description:
+    - The file name of the backup file, if created.
+  returned: success
+  type: str
+"""
 
 
-from ansible.module_utils.basic import AnsibleModule
 import os
 import re
-from tempfile import NamedTemporaryFile
 from datetime import datetime
+from tempfile import NamedTemporaryFile
 
+from ansible.module_utils.basic import AnsibleModule
 
-RULE_REGEX = re.compile(r"""(?P<rule_type>-?(?:auth|account|session|password))\s+
+RULE_REGEX = re.compile(
+    r"""(?P<rule_type>-?(?:auth|account|session|password))\s+
                         (?P<control>\[.*\]|\S*)\s+
                         (?P<path>\S*)\s*
-                        (?P<args>.*)\s*""", re.X)
+                        (?P<args>.*)\s*""",
+    re.X,
+)
 RULE_ARG_REGEX = re.compile(r"(\[.*\]|\S*)")
 
-VALID_TYPES = ['account', '-account', 'auth', '-auth', 'password', '-password', 'session', '-session']
+VALID_TYPES = ["account", "-account", "auth", "-auth", "password", "-password", "session", "-session"]
 
 
-class PamdLine(object):
-
+class PamdLine:
     def __init__(self, line):
         self.line = line
         self.prev = None
@@ -268,14 +254,12 @@ class PamdLine(object):
 
     @property
     def is_valid(self):
-        if self.line.strip() == '':
-            return True
-        return False
+        return self.line.strip() == ""
 
     def validate(self):
         if not self.is_valid:
-            return False, "Rule is not valid " + self.line
-        return True, "Rule is valid " + self.line
+            return False, f"Rule is not valid {self.line}"
+        return True, f"Rule is valid {self.line}"
 
     # Method to check if a rule matches the type, control and path.
     def matches(self, rule_type, rule_control, rule_path, rule_args=None):
@@ -290,39 +274,61 @@ class PamdEmptyLine(PamdLine):
 
 
 class PamdComment(PamdLine):
-
     def __init__(self, line):
-        super(PamdComment, self).__init__(line)
+        super().__init__(line)
 
     @property
     def is_valid(self):
-        if self.line.startswith('#'):
-            return True
-        return False
+        return self.line.startswith("#")
 
 
 class PamdInclude(PamdLine):
     def __init__(self, line):
-        super(PamdInclude, self).__init__(line)
+        super().__init__(line)
 
     @property
     def is_valid(self):
-        if self.line.startswith('@include'):
-            return True
-        return False
+        return self.line.startswith("@include")
 
 
 class PamdRule(PamdLine):
-
-    valid_simple_controls = ['required', 'requisite', 'sufficient', 'optional', 'include', 'substack', 'definitive']
-    valid_control_values = ['success', 'open_err', 'symbol_err', 'service_err', 'system_err', 'buf_err',
-                            'perm_denied', 'auth_err', 'cred_insufficient', 'authinfo_unavail', 'user_unknown',
-                            'maxtries', 'new_authtok_reqd', 'acct_expired', 'session_err', 'cred_unavail',
-                            'cred_expired', 'cred_err', 'no_module_data', 'conv_err', 'authtok_err',
-                            'authtok_recover_err', 'authtok_lock_busy', 'authtok_disable_aging', 'try_again',
-                            'ignore', 'abort', 'authtok_expired', 'module_unknown', 'bad_item', 'conv_again',
-                            'incomplete', 'default']
-    valid_control_actions = ['ignore', 'bad', 'die', 'ok', 'done', 'reset']
+    valid_simple_controls = ["required", "requisite", "sufficient", "optional", "include", "substack", "definitive"]
+    valid_control_values = [
+        "success",
+        "open_err",
+        "symbol_err",
+        "service_err",
+        "system_err",
+        "buf_err",
+        "perm_denied",
+        "auth_err",
+        "cred_insufficient",
+        "authinfo_unavail",
+        "user_unknown",
+        "maxtries",
+        "new_authtok_reqd",
+        "acct_expired",
+        "session_err",
+        "cred_unavail",
+        "cred_expired",
+        "cred_err",
+        "no_module_data",
+        "conv_err",
+        "authtok_err",
+        "authtok_recover_err",
+        "authtok_lock_busy",
+        "authtok_disable_aging",
+        "try_again",
+        "ignore",
+        "abort",
+        "authtok_expired",
+        "module_unknown",
+        "bad_item",
+        "conv_again",
+        "incomplete",
+        "default",
+    ]
+    valid_control_actions = ["ignore", "bad", "die", "ok", "done", "reset"]
 
     def __init__(self, rule_type, rule_control, rule_path, rule_args=None):
         self.prev = None
@@ -337,32 +343,32 @@ class PamdRule(PamdLine):
 
     # Method to check if a rule matches the type, control and path.
     def matches(self, rule_type, rule_control, rule_path, rule_args=None):
-        return (rule_type == self.rule_type and
-                rule_control == self.rule_control and
-                rule_path == self.rule_path)
+        return rule_type == self.rule_type and rule_control == self.rule_control and rule_path == self.rule_path
 
     @classmethod
     def rule_from_string(cls, line):
         rule_match = RULE_REGEX.search(line)
-        rule_args = parse_module_arguments(rule_match.group('args'))
-        return cls(rule_match.group('rule_type'), rule_match.group('control'), rule_match.group('path'), rule_args)
+        if rule_match is None:
+            return None
+        rule_args = parse_module_arguments(rule_match.group("args"))
+        return cls(rule_match.group("rule_type"), rule_match.group("control"), rule_match.group("path"), rule_args)
 
     def __str__(self):
         if self.rule_args:
-            return '{0: <11}{1} {2} {3}'.format(self.rule_type, self.rule_control, self.rule_path, ' '.join(self.rule_args))
-        return '{0: <11}{1} {2}'.format(self.rule_type, self.rule_control, self.rule_path)
+            return f"{self.rule_type: <11}{self.rule_control} {self.rule_path} {' '.join(self.rule_args)}"
+        return f"{self.rule_type: <11}{self.rule_control} {self.rule_path}"
 
     @property
     def rule_control(self):
         if isinstance(self._control, list):
-            return '[' + ' '.join(self._control) + ']'
+            return f"[{' '.join(self._control)}]"
         return self._control
 
     @rule_control.setter
     def rule_control(self, control):
-        if control.startswith('['):
-            control = control.replace(' = ', '=').replace('[', '').replace(']', '')
-            self._control = control.split(' ')
+        if control.startswith("["):
+            control = control.replace(" = ", "=").replace("[", "").replace("]", "")
+            self._control = control.split(" ")
         else:
             self._control = control
 
@@ -388,9 +394,7 @@ class PamdRule(PamdLine):
         except ValueError:
             return False
 
-        if number >= 0:
-            return True
-        return False
+        return number >= 0
 
     @property
     def is_valid(self):
@@ -399,39 +403,38 @@ class PamdRule(PamdLine):
     def validate(self):
         # Validate the rule type
         if self.rule_type not in VALID_TYPES:
-            return False, "Rule type, " + self.rule_type + ", is not valid in rule " + self.line
+            return False, f"Rule type, {self.rule_type}, is not valid in rule {self.line}"
         # Validate the rule control
         if isinstance(self._control, str) and self.rule_control not in PamdRule.valid_simple_controls:
-            return False, "Rule control, " + self.rule_control + ", is not valid in rule " + self.line
+            return False, f"Rule control, {self.rule_control}, is not valid in rule {self.line}"
         elif isinstance(self._control, list):
             for control in self._control:
                 value, action = control.split("=")
                 if value not in PamdRule.valid_control_values:
-                    return False, "Rule control value, " + value + ", is not valid in rule " + self.line
+                    return False, f"Rule control value, {value}, is not valid in rule {self.line}"
                 if action not in PamdRule.valid_control_actions and not PamdRule.is_action_unsigned_int(action):
-                    return False, "Rule control action, " + action + ", is not valid in rule " + self.line
+                    return False, f"Rule control action, {action}, is not valid in rule {self.line}"
 
         # TODO: Validate path
 
-        return True, "Rule is valid " + self.line
+        return True, f"Rule is valid {self.line}"
 
 
 # PamdService encapsulates an entire service and contains one or more rules.  It seems the best way is to do this
 # as a doubly linked list.
-class PamdService(object):
-
+class PamdService:
     def __init__(self, content):
         self._head = None
         self._tail = None
         for line in content.splitlines():
-            if line.lstrip().startswith('#'):
+            if line.lstrip().startswith("#"):
                 pamd_line = PamdComment(line)
-            elif line.lstrip().startswith('@include'):
+            elif line.lstrip().startswith("@include"):
                 pamd_line = PamdInclude(line)
-            elif line.strip() == '':
+            elif line.strip() == "":
                 pamd_line = PamdEmptyLine(line)
             else:
-                pamd_line = PamdRule.rule_from_string(line)
+                pamd_line = PamdRule.rule_from_string(line) or PamdLine(line)
 
             self.append(pamd_line)
 
@@ -450,13 +453,14 @@ class PamdService(object):
 
         while current_line is not None:
             if current_line.matches(rule_type, rule_control, rule_path):
-                if current_line.prev is not None:
-                    current_line.prev.next = current_line.next
-                    if current_line.next is not None:
-                        current_line.next.prev = current_line.prev
-                else:
+                if current_line.prev is None:
                     self._head = current_line.next
-                    current_line.next.prev = None
+                else:
+                    current_line.prev.next = current_line.next
+                if current_line.next is None:
+                    self._tail = current_line.prev
+                else:
+                    current_line.next.prev = current_line.prev
                 changed += 1
 
             current_line = current_line.next
@@ -466,7 +470,6 @@ class PamdService(object):
         lines = []
         current_line = self._head
         while current_line is not None:
-
             if isinstance(current_line, PamdRule) and current_line.matches(rule_type, rule_control, rule_path):
                 lines.append(current_line)
 
@@ -475,12 +478,11 @@ class PamdService(object):
         return lines
 
     def has_rule(self, rule_type, rule_control, rule_path):
-        if self.get(rule_type, rule_control, rule_path):
-            return True
-        return False
+        return bool(self.get(rule_type, rule_control, rule_path))
 
-    def update_rule(self, rule_type, rule_control, rule_path,
-                    new_type=None, new_control=None, new_path=None, new_args=None):
+    def update_rule(
+        self, rule_type, rule_control, rule_path, new_type=None, new_control=None, new_path=None, new_args=None
+    ):
         # Get a list of rules we want to change
         rules_to_find = self.get(rule_type, rule_control, rule_path)
 
@@ -511,8 +513,9 @@ class PamdService(object):
 
         return changes
 
-    def insert_before(self, rule_type, rule_control, rule_path,
-                      new_type=None, new_control=None, new_path=None, new_args=None):
+    def insert_before(
+        self, rule_type, rule_control, rule_path, new_type=None, new_control=None, new_path=None, new_args=None
+    ):
         # Get a list of rules we want to change
         rules_to_find = self.get(rule_type, rule_control, rule_path)
         changes = 0
@@ -531,25 +534,12 @@ class PamdService(object):
             while previous_rule is not None and isinstance(previous_rule, (PamdComment, PamdEmptyLine)):
                 previous_rule = previous_rule.prev
             # Next we'll see if the previous rule matches what we are trying to insert.
-            if previous_rule is not None and not previous_rule.matches(new_type, new_control, new_path):
-                # First set the original previous rule's next to the new_rule
-                previous_rule.next = new_rule
-                # Second, set the new_rule's previous to the original previous
-                new_rule.prev = previous_rule
-                # Third, set the new rule's next to the current rule
-                new_rule.next = current_rule
-                # Fourth, set the current rule's previous to the new_rule
-                current_rule.prev = new_rule
-
-                changes += 1
-
-            # Handle the case where it is the first rule in the list.
-            elif previous_rule is None:
-                # This is the case where the current rule is not only the first rule
-                # but the first line as well.  So we set the head to the new rule
+            # The new rule is placed right before the current rule, keeping any comments
+            # and empty lines between the previous rule and the current one.
+            if previous_rule is None or not previous_rule.matches(new_type, new_control, new_path):
+                # This is the case where the current rule is the first line, so we set the head to the new rule
                 if current_rule.prev is None:
                     self._head = new_rule
-                # This case would occur if the previous line was a comment.
                 else:
                     current_rule.prev.next = new_rule
                 new_rule.prev = current_rule.prev
@@ -559,8 +549,9 @@ class PamdService(object):
 
         return changes
 
-    def insert_after(self, rule_type, rule_control, rule_path,
-                     new_type=None, new_control=None, new_path=None, new_args=None):
+    def insert_after(
+        self, rule_type, rule_control, rule_path, new_type=None, new_control=None, new_path=None, new_args=None
+    ):
         # Get a list of rules we want to change
         rules_to_find = self.get(rule_type, rule_control, rule_path)
         changes = 0
@@ -577,27 +568,16 @@ class PamdService(object):
 
             # First we create a new rule
             new_rule = PamdRule(new_type, new_control, new_path, new_args)
-            if next_rule is not None and not next_rule.matches(new_type, new_control, new_path):
-                # If the previous rule doesn't match we'll insert our new rule.
-
-                # Second set the original next rule's previous to the new_rule
-                next_rule.prev = new_rule
-                # Third, set the new_rule's next to the original next rule
-                new_rule.next = next_rule
-                # Fourth, set the new rule's previous to the current rule
+            # If the next rule doesn't match we'll insert our new rule right after the current rule,
+            # keeping any comments and empty lines between the current rule and the next one.
+            if next_rule is None or not next_rule.matches(new_type, new_control, new_path):
+                # This is the case where the current rule is the last line, so we set the tail to the new rule
+                if current_rule.next is None:
+                    self._tail = new_rule
+                else:
+                    current_rule.next.prev = new_rule
+                new_rule.next = current_rule.next
                 new_rule.prev = current_rule
-                # Fifth, set the current rule's next to the new_rule
-                current_rule.next = new_rule
-
-                changes += 1
-
-            # This is the case where the current_rule is the last in the list
-            elif next_rule is None:
-                new_rule.prev = self._tail
-                new_rule.next = None
-                self._tail.next = new_rule
-                self._tail = new_rule
-
                 current_rule.next = new_rule
                 changes += 1
 
@@ -653,7 +633,7 @@ class PamdService(object):
             # Handle new key value arguments
             if key_value_new_args_set.difference(key_value_current_args_set):
                 for key in key_value_new_args_set.difference(key_value_current_args_set):
-                    new_args_to_add.append(key + '=' + key_value_new_args[key])
+                    new_args_to_add.append(f"{key}={key_value_new_args[key]}")
 
             if new_args_to_add:
                 current_rule.rule_args += new_args_to_add
@@ -663,8 +643,8 @@ class PamdService(object):
             if key_value_new_args_set.intersection(key_value_current_args_set):
                 for key in key_value_new_args_set.intersection(key_value_current_args_set):
                     if key_value_current_args[key] != key_value_new_args[key]:
-                        arg_index = current_rule.rule_args.index(key + '=' + key_value_current_args[key])
-                        current_rule.rule_args[arg_index] = str(key + '=' + key_value_new_args[key])
+                        arg_index = current_rule.rule_args.index(f"{key}={key_value_current_args[key]}")
+                        current_rule.rule_args[arg_index] = str(f"{key}={key_value_new_args[key]}")
                         rule_changed = True
 
             if rule_changed:
@@ -711,7 +691,7 @@ class PamdService(object):
         lines = []
         current_line = self._head
 
-        mark = "# Updated by Ansible - %s" % datetime.now().isoformat()
+        mark = f"# Updated by Ansible - {datetime.now().isoformat()}"
         while current_line is not None:
             lines.append(str(current_line))
             current_line = current_line.next
@@ -725,7 +705,8 @@ class PamdService(object):
             else:
                 lines.insert(1, mark)
 
-        return '\n'.join(lines) + '\n'
+        lines_joined = "\n".join(lines)
+        return f"{lines_joined}\n"
 
 
 def parse_module_arguments(module_arguments, return_none=False):
@@ -753,20 +734,23 @@ def parse_module_arguments(module_arguments, return_none=False):
 
 
 def main():
-
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(type='str', required=True),
-            type=dict(type='str', required=True, choices=VALID_TYPES),
-            control=dict(type='str', required=True),
-            module_path=dict(type='str', required=True),
-            new_type=dict(type='str', choices=VALID_TYPES),
-            new_control=dict(type='str'),
-            new_module_path=dict(type='str'),
-            module_arguments=dict(type='list', elements='str'),
-            state=dict(type='str', default='updated', choices=['absent', 'after', 'args_absent', 'args_present', 'before', 'updated']),
-            path=dict(type='path', default='/etc/pam.d'),
-            backup=dict(type='bool', default=False),
+            name=dict(type="str", required=True),
+            type=dict(type="str", required=True, choices=VALID_TYPES),
+            control=dict(type="str", required=True),
+            module_path=dict(type="str", required=True),
+            new_type=dict(type="str", choices=VALID_TYPES),
+            new_control=dict(type="str"),
+            new_module_path=dict(type="str"),
+            module_arguments=dict(type="list", elements="str"),
+            state=dict(
+                type="str",
+                default="updated",
+                choices=["absent", "after", "args_absent", "args_present", "before", "updated"],
+            ),
+            path=dict(type="path", default="/etc/pam.d"),
+            backup=dict(type="bool", default=False),
         ),
         supports_check_mode=True,
         required_if=[
@@ -776,48 +760,76 @@ def main():
             ("state", "after", ["new_control", "new_type", "new_module_path"]),
         ],
     )
-    content = str()
+    content = ""
     fname = os.path.join(module.params["path"], module.params["name"])
 
     # Open the file and read the content or fail
     try:
-        with open(fname, 'r') as service_file_obj:
+        with open(fname) as service_file_obj:
             content = service_file_obj.read()
-    except IOError as e:
+    except OSError as e:
         # If unable to read the file, fail out
-        module.fail_json(msg='Unable to open/read PAM module file %s with error %s.' % (fname, str(e)))
+        module.fail_json(msg=f"Unable to open/read PAM module file {fname} with error {e}.")
 
     # Assuming we didn't fail, create the service
     service = PamdService(content)
     # Set the action
-    action = module.params['state']
+    action = module.params["state"]
 
     changes = 0
 
     # Take action
-    if action == 'updated':
-        changes = service.update_rule(module.params['type'], module.params['control'], module.params['module_path'],
-                                      module.params['new_type'], module.params['new_control'], module.params['new_module_path'],
-                                      module.params['module_arguments'])
-    elif action == 'before':
-        changes = service.insert_before(module.params['type'], module.params['control'], module.params['module_path'],
-                                        module.params['new_type'], module.params['new_control'], module.params['new_module_path'],
-                                        module.params['module_arguments'])
-    elif action == 'after':
-        changes = service.insert_after(module.params['type'], module.params['control'], module.params['module_path'],
-                                       module.params['new_type'], module.params['new_control'], module.params['new_module_path'],
-                                       module.params['module_arguments'])
-    elif action == 'args_absent':
-        changes = service.remove_module_arguments(module.params['type'], module.params['control'], module.params['module_path'],
-                                                  module.params['module_arguments'])
-    elif action == 'args_present':
-        if [arg for arg in parse_module_arguments(module.params['module_arguments']) if arg.startswith("[")]:
-            module.fail_json(msg="Unable to process bracketed '[' complex arguments with 'args_present'. Please use 'updated'.")
+    if action == "updated":
+        changes = service.update_rule(
+            module.params["type"],
+            module.params["control"],
+            module.params["module_path"],
+            module.params["new_type"],
+            module.params["new_control"],
+            module.params["new_module_path"],
+            module.params["module_arguments"],
+        )
+    elif action == "before":
+        changes = service.insert_before(
+            module.params["type"],
+            module.params["control"],
+            module.params["module_path"],
+            module.params["new_type"],
+            module.params["new_control"],
+            module.params["new_module_path"],
+            module.params["module_arguments"],
+        )
+    elif action == "after":
+        changes = service.insert_after(
+            module.params["type"],
+            module.params["control"],
+            module.params["module_path"],
+            module.params["new_type"],
+            module.params["new_control"],
+            module.params["new_module_path"],
+            module.params["module_arguments"],
+        )
+    elif action == "args_absent":
+        changes = service.remove_module_arguments(
+            module.params["type"],
+            module.params["control"],
+            module.params["module_path"],
+            module.params["module_arguments"],
+        )
+    elif action == "args_present":
+        if [arg for arg in parse_module_arguments(module.params["module_arguments"]) if arg.startswith("[")]:
+            module.fail_json(
+                msg="Unable to process bracketed '[' complex arguments with 'args_present'. Please use 'updated'."
+            )
 
-        changes = service.add_module_arguments(module.params['type'], module.params['control'], module.params['module_path'],
-                                               module.params['module_arguments'])
-    elif action == 'absent':
-        changes = service.remove(module.params['type'], module.params['control'], module.params['module_path'])
+        changes = service.add_module_arguments(
+            module.params["type"],
+            module.params["control"],
+            module.params["module_path"],
+            module.params["module_arguments"],
+        )
+    elif action == "absent":
+        changes = service.remove(module.params["type"], module.params["control"], module.params["module_path"])
 
     valid, msg = service.validate()
 
@@ -828,26 +840,26 @@ def main():
     result = dict(
         changed=(changes > 0),
         change_count=changes,
-        backupdest='',
+        backupdest="",
     )
 
     # If not check mode and something changed, backup the original if necessary then write out the file or fail
-    if not module.check_mode and result['changed']:
+    if not module.check_mode and result["changed"]:
         # First, create a backup if desired.
-        if module.params['backup']:
-            result['backupdest'] = module.backup_local(fname)
+        if module.params["backup"]:
+            result["backupdest"] = module.backup_local(fname)
         try:
-            temp_file = NamedTemporaryFile(mode='w', dir=module.tmpdir, delete=False)
-            with open(temp_file.name, 'w') as fd:
+            temp_file = NamedTemporaryFile(mode="w", dir=module.tmpdir, delete=False)
+            with open(temp_file.name, "w") as fd:
                 fd.write(str(service))
 
-        except IOError:
-            module.fail_json(msg='Unable to create temporary file %s' % temp_file)
+        except OSError:
+            module.fail_json(msg=f"Unable to create temporary file {temp_file}")
 
         module.atomic_move(temp_file.name, os.path.realpath(fname))
 
     module.exit_json(**result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

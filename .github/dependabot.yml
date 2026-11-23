@@ -9,3 +9,13 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      ci:
+        patterns:
+          - "*"
+
+  - package-ecosystem: "devcontainers"
+    directory: ".devcontainer"
+    schedule:
+      interval: "weekly"
+    rebase-strategy: auto

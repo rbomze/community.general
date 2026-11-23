@@ -13,9 +13,9 @@
     state: absent
   register: result
 - name: verify test absent dns record
-  assert:
+  ansible.builtin.assert:
     that:
-    - result is successful
+      - result is successful
 
 - name: test create a dns record in check mode
   community.general.gandi_livedns:
@@ -28,9 +28,9 @@
   check_mode: true
   register: result
 - name: verify test create a dns record in check mode
-  assert:
+  ansible.builtin.assert:
     that:
-    - result is changed
+      - result is changed
 
 - name: test create a dns record
   community.general.gandi_livedns:
@@ -42,13 +42,13 @@
     type: "{{ item.type }}"
   register: result
 - name: verify test create a dns record
-  assert:
+  ansible.builtin.assert:
     that:
-    - result is changed
-    - result.record['values'] == {{ item['values'] }}
-    - result.record.record == "{{ item.record }}"
-    - result.record.type == "{{ item.type }}"
-    - result.record.ttl == {{ item.ttl }}
+      - result is changed
+      - result.record['values'] == item['values']
+      - result.record.record == item.record
+      - result.record.type == item.type
+      - result.record.ttl == item.ttl
 
 - name: test create a dns record idempotence
   community.general.gandi_livedns:
@@ -60,10 +60,19 @@
     type: "{{ item.type }}"
   register: result
 - name: verify test create a dns record idempotence
-  assert:
+  ansible.builtin.assert:
     that:
-    - result is not changed
-    - result.record['values'] == {{ item['values'] }}
-    - result.record.record == "{{ item.record }}"
-    - result.record.type == "{{ item.type }}"
-    - result.record.ttl == {{ item.ttl }}
+      - result is not changed
+      - result.record['values'] == item['values']
+      - result.record.record == item.record
+      - result.record.type == item.type
+      - result.record.ttl == item.ttl
+
+- name: test create a DNS record with personal access token
+  community.general.gandi_livedns:
+    personal_access_token: "{{ gandi_personal_access_token }}"
+    record: "{{ item.record }}"
+    domain: "{{ gandi_livedns_domain_name }}"
+    values: "{{ item['values'] }}"
+    ttl: "{{ item.ttl }}"
+    type: "{{ item.type }}"

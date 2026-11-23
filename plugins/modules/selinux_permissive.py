@@ -1,22 +1,19 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 
 # Copyright (c) 2015, Michael Scherer <misc@zarb.org>
 # inspired by code of github.com/dandiker/
 # GNU General Public License v3.0+ (see LICENSES/GPL-3.0-or-later.txt or https://www.gnu.org/licenses/gpl-3.0.txt)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
-DOCUMENTATION = r'''
----
+DOCUMENTATION = r"""
 module: selinux_permissive
 short_description: Change permissive domain in SELinux policy
 description:
   - Add and remove a domain from the list of permissive domains.
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: full
@@ -25,20 +22,20 @@ attributes:
 options:
   domain:
     description:
-        - The domain that will be added or removed from the list of permissive domains.
+      - The domain that is added or removed from the list of permissive domains.
     type: str
     required: true
-    aliases: [ name ]
+    aliases: [name]
   permissive:
     description:
-        - Indicate if the domain should or should not be set as permissive.
+      - Indicate if the domain should or should not be set as permissive.
     type: bool
     required: true
   no_reload:
     description:
-        - Disable reloading of the SELinux policy after making change to a domain's permissive setting.
-        - The default is V(false), which causes policy to be reloaded when a domain changes state.
-        - Reloading the policy does not work on older versions of the C(policycoreutils-python) library, for example in EL 6."
+      - Disable reloading of the SELinux policy after making change to a domain's permissive setting.
+      - The default is V(false), which causes policy to be reloaded when a domain changes state.
+      - Reloading the policy does not work on older versions of the C(policycoreutils-python) library, for example in EL 6.".
     type: bool
     default: false
   store:
@@ -47,18 +44,18 @@ options:
     type: str
     default: ''
 notes:
-    - Requires a recent version of SELinux and C(policycoreutils-python) (EL 6 or newer).
-requirements: [ policycoreutils-python ]
+  - Requires a recent version of SELinux and C(policycoreutils-python) (EL 6 or newer).
+requirements: [policycoreutils-python]
 author:
-- Michael Scherer (@mscherer) <misc@zarb.org>
-'''
+  - Michael Scherer (@mscherer) <misc@zarb.org>
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Change the httpd_t domain to permissive
   community.general.selinux_permissive:
     name: httpd_t
     permissive: true
-'''
+"""
 
 import traceback
 
@@ -66,49 +63,48 @@ HAVE_SEOBJECT = False
 SEOBJECT_IMP_ERR = None
 try:
     import seobject
+
     HAVE_SEOBJECT = True
 except ImportError:
     SEOBJECT_IMP_ERR = traceback.format_exc()
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils.common.text.converters import to_native
 
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            domain=dict(type='str', required=True, aliases=['name']),
-            store=dict(type='str', default=''),
-            permissive=dict(type='bool', required=True),
-            no_reload=dict(type='bool', default=False),
+            domain=dict(type="str", required=True, aliases=["name"]),
+            store=dict(type="str", default=""),
+            permissive=dict(type="bool", required=True),
+            no_reload=dict(type="bool", default=False),
         ),
         supports_check_mode=True,
     )
 
     # global vars
     changed = False
-    store = module.params['store']
-    permissive = module.params['permissive']
-    domain = module.params['domain']
-    no_reload = module.params['no_reload']
+    store = module.params["store"]
+    permissive = module.params["permissive"]
+    domain = module.params["domain"]
+    no_reload = module.params["no_reload"]
 
     if not HAVE_SEOBJECT:
-        module.fail_json(changed=False, msg=missing_required_lib("policycoreutils-python"),
-                         exception=SEOBJECT_IMP_ERR)
+        module.fail_json(changed=False, msg=missing_required_lib("policycoreutils-python"), exception=SEOBJECT_IMP_ERR)
 
     try:
         permissive_domains = seobject.permissiveRecords(store)
     except ValueError as e:
-        module.fail_json(domain=domain, msg=to_native(e), exception=traceback.format_exc())
+        module.fail_json(domain=domain, msg=f"{e}", exception=traceback.format_exc())
 
     # not supported on EL 6
-    if 'set_reload' in dir(permissive_domains):
+    if "set_reload" in dir(permissive_domains):
         permissive_domains.set_reload(not no_reload)
 
     try:
         all_domains = permissive_domains.get_all()
     except ValueError as e:
-        module.fail_json(domain=domain, msg=to_native(e), exception=traceback.format_exc())
+        module.fail_json(domain=domain, msg=f"{e}", exception=traceback.format_exc())
 
     if permissive:
         if domain not in all_domains:
@@ -116,7 +112,7 @@ def main():
                 try:
                     permissive_domains.add(domain)
                 except ValueError as e:
-                    module.fail_json(domain=domain, msg=to_native(e), exception=traceback.format_exc())
+                    module.fail_json(domain=domain, msg=f"{e}", exception=traceback.format_exc())
             changed = True
     else:
         if domain in all_domains:
@@ -124,12 +120,11 @@ def main():
                 try:
                     permissive_domains.delete(domain)
                 except ValueError as e:
-                    module.fail_json(domain=domain, msg=to_native(e), exception=traceback.format_exc())
+                    module.fail_json(domain=domain, msg=f"{e}", exception=traceback.format_exc())
             changed = True
 
-    module.exit_json(changed=changed, store=store,
-                     permissive=permissive, domain=domain)
+    module.exit_json(changed=changed, store=store, permissive=permissive, domain=domain)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

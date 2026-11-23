@@ -1,15 +1,12 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 
 # Copyright (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see LICENSES/GPL-3.0-or-later.txt or https://www.gnu.org/licenses/gpl-3.0.txt)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
-DOCUMENTATION = '''
----
+DOCUMENTATION = r"""
 module: heroku_collaborator
 short_description: Add or delete app collaborators on Heroku
 description:
@@ -22,7 +19,7 @@ author:
 requirements:
   - heroku3
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: full
@@ -32,35 +29,35 @@ options:
   api_key:
     type: str
     description:
-      - Heroku API key
+      - Heroku API key.
   apps:
     type: list
     elements: str
     description:
-      - List of Heroku App names
+      - List of Heroku App names.
     required: true
   suppress_invitation:
     description:
-      - Suppress email invitation when creating collaborator
+      - Suppress email invitation when creating collaborator.
     type: bool
     default: false
   user:
     type: str
     description:
-      - User ID or e-mail
+      - User ID or e-mail.
     required: true
   state:
     type: str
     description:
-      - Create or remove the heroku collaborator
+      - Create or remove the heroku collaborator.
     choices: ["present", "absent"]
     default: "present"
 notes:
   - E(HEROKU_API_KEY) and E(TF_VAR_HEROKU_API_KEY) environment variables can be used instead setting O(api_key).
-  - If you use C(check_mode), you can also pass the C(-v) flag to see affected apps in C(msg), e.g. ["heroku-example-app"].
-'''
+  - If you use C(check_mode), you can also pass the C(-v) flag to see affected apps in RV(ignore:msg), for example C(["heroku-example-app"]).
+"""
 
-EXAMPLES = '''
+EXAMPLES = r"""
 - name: Create a heroku collaborator
   community.general.heroku_collaborator:
     api_key: YOUR_API_KEY
@@ -76,39 +73,40 @@ EXAMPLES = '''
     suppress_invitation: '{{ item.suppress_invitation | default(suppress_invitation) }}'
     state: '{{ item.state | default("present") }}'
   with_items:
-    - { user: 'a.b@example.com' }
-    - { state: 'absent', user: 'b.c@example.com', suppress_invitation: false }
-    - { user: 'x.y@example.com', apps: ["heroku-example-app"] }
-'''
+    - {user: 'a.b@example.com'}
+    - {state: 'absent', user: 'b.c@example.com', suppress_invitation: false}
+    - {user: 'x.y@example.com', apps: ["heroku-example-app"]}
+"""
 
-RETURN = ''' # '''
+RETURN = """ # """
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.community.general.plugins.module_utils.heroku import HerokuHelper
+
+from ansible_collections.community.general.plugins.module_utils._heroku import HerokuHelper
 
 
 def add_or_delete_heroku_collaborator(module, client):
-    user = module.params['user']
-    state = module.params['state']
+    user = module.params["user"]
+    state = module.params["state"]
     affected_apps = []
     result_state = False
 
-    for app in module.params['apps']:
+    for app in module.params["apps"]:
         if app not in client.apps():
-            module.fail_json(msg='App {0} does not exist'.format(app))
+            module.fail_json(msg=f"App {app} does not exist")
 
         heroku_app = client.apps()[app]
 
         heroku_collaborator_list = [collaborator.user.email for collaborator in heroku_app.collaborators()]
 
-        if state == 'absent' and user in heroku_collaborator_list:
+        if state == "absent" and user in heroku_collaborator_list:
             if not module.check_mode:
                 heroku_app.remove_collaborator(user)
             affected_apps += [app]
             result_state = True
-        elif state == 'present' and user not in heroku_collaborator_list:
+        elif state == "present" and user not in heroku_collaborator_list:
             if not module.check_mode:
-                heroku_app.add_collaborator(user_id_or_email=user, silent=module.params['suppress_invitation'])
+                heroku_app.add_collaborator(user_id_or_email=user, silent=module.params["suppress_invitation"])
             affected_apps += [app]
             result_state = True
 
@@ -118,15 +116,12 @@ def add_or_delete_heroku_collaborator(module, client):
 def main():
     argument_spec = HerokuHelper.heroku_argument_spec()
     argument_spec.update(
-        user=dict(required=True, type='str'),
-        apps=dict(required=True, type='list', elements='str'),
-        suppress_invitation=dict(default=False, type='bool'),
-        state=dict(default='present', type='str', choices=['present', 'absent']),
+        user=dict(required=True, type="str"),
+        apps=dict(required=True, type="list", elements="str"),
+        suppress_invitation=dict(default=False, type="bool"),
+        state=dict(default="present", type="str", choices=["present", "absent"]),
     )
-    module = AnsibleModule(
-        argument_spec=argument_spec,
-        supports_check_mode=True
-    )
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     client = HerokuHelper(module).get_heroku_client()
 
@@ -134,5 +129,5 @@ def main():
     module.exit_json(changed=has_changed, msg=msg)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

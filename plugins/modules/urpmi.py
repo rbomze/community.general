@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 
 # Copyright (c) 2013, Philippe Makowski
 # Written by Philippe Makowski <philippem@mageia.org>
@@ -8,17 +7,15 @@
 # GNU General Public License v3.0+ (see LICENSES/GPL-3.0-or-later.txt or https://www.gnu.org/licenses/gpl-3.0.txt)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
-DOCUMENTATION = '''
----
+DOCUMENTATION = r"""
 module: urpmi
 short_description: Urpmi manager
 description:
-  - Manages packages with C(urpmi) (such as for Mageia or Mandriva)
+  - Manages packages with C(urpmi) (such as for Mageia or Mandriva).
 extends_documentation_fragment:
-  - community.general.attributes
+  - community.general._attributes
 attributes:
   check_mode:
     support: none
@@ -29,13 +26,13 @@ options:
     description:
       - A list of package names to install, upgrade or remove.
     required: true
-    aliases: [ package, pkg ]
+    aliases: [package, pkg]
     type: list
     elements: str
   state:
     description:
       - Indicates the desired package state.
-    choices: [ absent, present, installed, removed ]
+    choices: [absent, present, installed, removed]
     default: present
     type: str
   update_cache:
@@ -50,21 +47,20 @@ options:
     default: true
   force:
     description:
-      - Assume "yes" is the answer to any question urpmi has to ask.
-        Corresponds to the C(--force) option for C(urpmi).
+      - Assume "yes" is the answer to any question urpmi has to ask. Corresponds to the C(--force) option for C(urpmi).
     type: bool
     default: true
   root:
     description:
-      - Specifies an alternative install root, relative to which all packages will be installed.
-        Corresponds to the C(--root) option for C(urpmi).
-    aliases: [ installroot ]
+      - Specifies an alternative install root, relative to which all packages are installed. Corresponds to the C(--root)
+        option for C(urpmi).
+    aliases: [installroot]
     type: str
 author:
-- Philippe Makowski (@pmakowski)
-'''
+  - Philippe Makowski (@pmakowski)
+"""
 
-EXAMPLES = '''
+EXAMPLES = r"""
 - name: Install package foo
   community.general.urpmi:
     pkg: foo
@@ -85,7 +81,7 @@ EXAMPLES = '''
     name: bar
     state: present
     update_cache: true
-'''
+"""
 
 
 from ansible.module_utils.basic import AnsibleModule
@@ -95,34 +91,29 @@ def query_package(module, name, root):
     # rpm -q returns 0 if the package is installed,
     # 1 if it is not installed
     rpm_path = module.get_bin_path("rpm", True)
-    cmd = "%s -q %s %s" % (rpm_path, name, root_option(root))
+    cmd = [rpm_path, "-q", name] + root_option(root)
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
-    if rc == 0:
-        return True
-    else:
-        return False
+    return rc == 0
 
 
 def query_package_provides(module, name, root):
     # rpm -q returns 0 if the package is installed,
     # 1 if it is not installed
     rpm_path = module.get_bin_path("rpm", True)
-    cmd = "%s -q --whatprovides %s %s" % (rpm_path, name, root_option(root))
+    cmd = [rpm_path, "-q", "--whatprovides", name] + root_option(root)
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
     return rc == 0
 
 
 def update_package_db(module):
-
     urpmiupdate_path = module.get_bin_path("urpmi.update", True)
-    cmd = "%s -a -q" % (urpmiupdate_path,)
+    cmd = [urpmiupdate_path, "-a", "-q"]
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
     if rc != 0:
         module.fail_json(msg="could not update package db")
 
 
 def remove_packages(module, packages, root):
-
     remove_c = 0
     # Using a for loop in case of error, we can report the package that failed
     for package in packages:
@@ -131,91 +122,85 @@ def remove_packages(module, packages, root):
             continue
 
         urpme_path = module.get_bin_path("urpme", True)
-        cmd = "%s --auto %s %s" % (urpme_path, root_option(root), package)
+        cmd = [urpme_path, "--auto"] + root_option(root) + [package]
         rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
         if rc != 0:
-            module.fail_json(msg="failed to remove %s" % (package))
+            module.fail_json(msg=f"failed to remove {package}")
 
         remove_c += 1
 
     if remove_c > 0:
-
-        module.exit_json(changed=True, msg="removed %s package(s)" % remove_c)
+        module.exit_json(changed=True, msg=f"removed {remove_c} package(s)")
 
     module.exit_json(changed=False, msg="package(s) already absent")
 
 
 def install_packages(module, pkgspec, root, force=True, no_recommends=True):
-
-    packages = ""
+    packages = []
     for package in pkgspec:
         if not query_package_provides(module, package, root):
-            packages += "'%s' " % package
+            packages.append(package)
 
-    if len(packages) != 0:
+    if packages:
         if no_recommends:
-            no_recommends_yes = '--no-recommends'
+            no_recommends_yes = ["--no-recommends"]
         else:
-            no_recommends_yes = ''
+            no_recommends_yes = []
 
         if force:
-            force_yes = '--force'
+            force_yes = ["--force"]
         else:
-            force_yes = ''
+            force_yes = []
 
         urpmi_path = module.get_bin_path("urpmi", True)
-        cmd = ("%s --auto %s --quiet %s %s %s" % (urpmi_path, force_yes,
-                                                  no_recommends_yes,
-                                                  root_option(root),
-                                                  packages))
+        cmd = [urpmi_path, "--auto"] + force_yes + ["--quiet"] + no_recommends_yes + root_option(root) + packages
 
         rc, out, err = module.run_command(cmd)
 
         for package in pkgspec:
             if not query_package_provides(module, package, root):
-                module.fail_json(msg="'urpmi %s' failed: %s" % (package, err))
+                module.fail_json(msg=f"'urpmi {package}' failed: {err}")
 
         # urpmi always have 0 for exit code if --force is used
         if rc:
-            module.fail_json(msg="'urpmi %s' failed: %s" % (packages, err))
+            module.fail_json(msg=f"'urpmi {' '.join(packages)}' failed: {err}")
         else:
-            module.exit_json(changed=True, msg="%s present(s)" % packages)
+            module.exit_json(changed=True, msg=f"{' '.join(packages)} present(s)")
     else:
         module.exit_json(changed=False)
 
 
 def root_option(root):
-    if (root):
-        return "--root=%s" % (root)
+    if root:
+        return [f"--root={root}"]
     else:
-        return ""
+        return []
 
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(type='str', default='present',
-                       choices=['absent', 'installed', 'present', 'removed']),
-            update_cache=dict(type='bool', default=False),
-            force=dict(type='bool', default=True),
-            no_recommends=dict(type='bool', default=True),
-            name=dict(type='list', elements='str', required=True, aliases=['package', 'pkg']),
-            root=dict(type='str', aliases=['installroot']),
+            state=dict(type="str", default="present", choices=["absent", "installed", "present", "removed"]),
+            update_cache=dict(type="bool", default=False),
+            force=dict(type="bool", default=True),
+            no_recommends=dict(type="bool", default=True),
+            name=dict(type="list", elements="str", required=True, aliases=["package", "pkg"]),
+            root=dict(type="str", aliases=["installroot"]),
         ),
     )
 
     p = module.params
 
-    if p['update_cache']:
+    if p["update_cache"]:
         update_package_db(module)
 
-    if p['state'] in ['installed', 'present']:
-        install_packages(module, p['name'], p['root'], p['force'], p['no_recommends'])
+    if p["state"] in ["installed", "present"]:
+        install_packages(module, p["name"], p["root"], p["force"], p["no_recommends"])
 
-    elif p['state'] in ['removed', 'absent']:
-        remove_packages(module, p['name'], p['root'])
+    elif p["state"] in ["removed", "absent"]:
+        remove_packages(module, p["name"], p["root"])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -1,71 +1,67 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2019 Huawei
 # GNU General Public License v3.0+ (see LICENSES/GPL-3.0-or-later.txt or https://www.gnu.org/licenses/gpl-3.0.txt)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 ###############################################################################
 # Documentation
 ###############################################################################
 
-DOCUMENTATION = '''
----
+DOCUMENTATION = r"""
 module: hwc_vpc_route
 description:
-    - vpc route management.
-short_description: Creates a resource of Vpc/Route in Huawei Cloud
+  - VPC route management.
+short_description: Creates a resource of VPC/Route in Huawei Cloud
 notes:
-    - If O(id) option is provided, it takes precedence over O(destination), O(vpc_id), O(type), and O(next_hop) for route selection.
-    - O(destination), O(vpc_id), O(type) and O(next_hop) are used for route selection. If more than one route with this options exists, execution is aborted.
-    - No parameter support updating. If one of option is changed, the module will create a new resource.
+  - If O(id) option is provided, it takes precedence over O(destination), O(vpc_id), O(type), and O(next_hop) for route selection.
+  - O(destination), O(vpc_id), O(type) and O(next_hop) are used for route selection. If more than one route with this options
+    exists, execution is aborted.
+  - No parameter support updating. If one of option is changed, the module creates a new resource.
 version_added: '0.2.0'
 author: Huawei Inc. (@huaweicloud)
 requirements:
-    - keystoneauth1 >= 3.6.0
+  - keystoneauth1 >= 3.6.0
 attributes:
-    check_mode:
-        support: full
-    diff_mode:
-        support: none
+  check_mode:
+    support: full
+  diff_mode:
+    support: none
 options:
-    state:
-        description:
-            - Whether the given object should exist in Huawei Cloud.
-        type: str
-        choices: ['present', 'absent']
-        default: 'present'
-    destination:
-        description:
-            - Specifies the destination IP address or CIDR block.
-        type: str
-        required: true
-    next_hop:
-        description:
-            - Specifies the next hop. The value is VPC peering connection ID.
-        type: str
-        required: true
-    vpc_id:
-        description:
-            - Specifies the VPC ID to which route is added.
-        type: str
-        required: true
-    type:
-        description:
-            - Specifies the type of route.
-        type: str
-        required: false
-        default: 'peering'
+  state:
+    description:
+      - Whether the given object should exist in Huawei Cloud.
+    type: str
+    choices: ['present', 'absent']
+    default: 'present'
+  destination:
+    description:
+      - Specifies the destination IP address or CIDR block.
+    type: str
+    required: true
+  next_hop:
+    description:
+      - Specifies the next hop. The value is VPC peering connection ID.
+    type: str
+    required: true
+  vpc_id:
+    description:
+      - Specifies the VPC ID to which route is added.
+    type: str
+    required: true
+  type:
+    description:
+      - Specifies the type of route.
+    type: str
+    default: 'peering'
 extends_documentation_fragment:
-  - community.general.hwc
-  - community.general.attributes
+  - community.general._hwc
+  - community.general._attributes
+"""
 
-'''
-
-EXAMPLES = '''
+EXAMPLES = r"""
 # create a peering connect
 - name: Create a local vpc
   hwc_network_vpc:
@@ -91,51 +87,57 @@ EXAMPLES = '''
     vpc_id: "{{ vpc1.id }}"
     destination: "192.168.0.0/16"
     next_hop: "{{ connect.id }}"
-'''
+"""
 
-RETURN = '''
-    id:
-        description:
-            - UUID of the route.
-        type: str
-        returned: success
-    destination:
-        description:
-            - Specifies the destination IP address or CIDR block.
-        type: str
-        returned: success
-    next_hop:
-        description:
-            - Specifies the next hop. The value is VPC peering connection ID.
-        type: str
-        returned: success
-    vpc_id:
-        description:
-            - Specifies the VPC ID to which route is added.
-        type: str
-        returned: success
-    type:
-        description:
-            - Specifies the type of route.
-        type: str
-        returned: success
-'''
+RETURN = r"""
+id:
+  description:
+    - UUID of the route.
+  type: str
+  returned: success
+destination:
+  description:
+    - Specifies the destination IP address or CIDR block.
+  type: str
+  returned: success
+next_hop:
+  description:
+    - Specifies the next hop. The value is VPC peering connection ID.
+  type: str
+  returned: success
+vpc_id:
+  description:
+    - Specifies the VPC ID to which route is added.
+  type: str
+  returned: success
+type:
+  description:
+    - Specifies the type of route.
+  type: str
+  returned: success
+"""
 
-from ansible_collections.community.general.plugins.module_utils.hwc_utils import (
-    Config, HwcClientException, HwcModule, are_different_dicts, build_path,
-    get_region, is_empty_value, navigate_value)
+from ansible_collections.community.general.plugins.module_utils._hwc_utils import (
+    Config,
+    HwcClientException,
+    HwcModule,
+    are_different_dicts,
+    build_path,
+    get_region,
+    is_empty_value,
+    navigate_value,
+)
 
 
 def build_module():
     return HwcModule(
         argument_spec=dict(
-            state=dict(default='present', choices=['present', 'absent'],
-                       type='str'),
-            destination=dict(type='str', required=True),
-            next_hop=dict(type='str', required=True),
-            vpc_id=dict(type='str', required=True),
-            type=dict(type='str', default='peering'),
-            id=dict(type='str')
+            state=dict(default="present", choices=["present", "absent"], type="str"),
+            destination=dict(type="str", required=True),
+            next_hop=dict(type="str", required=True),
+            vpc_id=dict(type="str", required=True),
+            type=dict(type="str", default="peering"),
+            id=dict(type="str"),
         ),
         supports_check_mode=True,
     )
@@ -149,29 +151,26 @@ def main():
 
     try:
         resource = None
-        if module.params.get("id"):
+        if module.params["id"]:
             resource = get_resource_by_id(config)
-            if module.params['state'] == 'present':
+            if module.params["state"] == "present":
                 opts = user_input_parameters(module)
                 if are_different_dicts(resource, opts):
                     raise Exception(
-                        "Cannot change option from (%s) to (%s) for an"
-                        " existing route.(%s)" % (resource, opts,
-                                                  config.module.params.get(
-                                                      'id')))
+                        f"Cannot change option from ({resource}) to ({opts}) for an existing route.({config.module.params['id']})"
+                    )
         else:
             v = search_resource(config)
             if len(v) > 1:
-                raise Exception("Found more than one resource(%s)" % ", ".join([
-                                navigate_value(i, ["id"]) for i in v]))
+                raise Exception(f"Found more than one resource({', '.join([navigate_value(i, ['id']) for i in v])})")
 
             if len(v) == 1:
                 resource = update_properties(module, {"read": v[0]}, None)
-                module.params['id'] = navigate_value(resource, ["id"])
+                module.params["id"] = navigate_value(resource, ["id"])
 
         result = {}
         changed = False
-        if module.params['state'] == 'present':
+        if module.params["state"] == "present":
             if resource is None:
                 if not module.check_mode:
                     resource = create(config)
@@ -188,17 +187,17 @@ def main():
         module.fail_json(msg=str(ex))
 
     else:
-        result['changed'] = changed
+        result["changed"] = changed
         module.exit_json(**result)
 
 
 def user_input_parameters(module):
     return {
-        "destination": module.params.get("destination"),
-        "next_hop": module.params.get("next_hop"),
-        "type": module.params.get("type"),
-        "vpc_id": module.params.get("vpc_id"),
-        "id": module.params.get("id"),
+        "destination": module.params["destination"],
+        "next_hop": module.params["next_hop"],
+        "type": module.params["type"],
+        "vpc_id": module.params["vpc_id"],
+        "id": module.params["id"],
     }
 
 
@@ -209,7 +208,7 @@ def create(config):
 
     params = build_create_parameters(opts)
     r = send_create_request(module, params, client)
-    module.params['id'] = navigate_value(r, ["route", "id"])
+    module.params["id"] = navigate_value(r, ["route", "id"])
 
     result = update_properties(module, {"read": fill_resp_body(r)}, None)
     return result
@@ -240,19 +239,19 @@ def _build_query_link(opts):
 
     v = navigate_value(opts, ["type"])
     if v:
-        query_params.append("type=" + str(v))
+        query_params.append(f"type={v}")
 
     v = navigate_value(opts, ["destination"])
     if v:
-        query_params.append("destination=" + str(v))
+        query_params.append(f"destination={v}")
 
     v = navigate_value(opts, ["vpc_id"])
     if v:
-        query_params.append("vpc_id=" + str(v))
+        query_params.append(f"vpc_id={v}")
 
     query_link = "?marker={marker}&limit=10"
     if query_params:
-        query_link += "&" + "&".join(query_params)
+        query_link += f"&{'&'.join(query_params)}"
 
     return query_link
 
@@ -263,10 +262,10 @@ def search_resource(config):
     opts = user_input_parameters(module)
     identity_obj = _build_identity_object(opts)
     query_link = _build_query_link(opts)
-    link = "v2.0/vpc/routes" + query_link
+    link = f"v2.0/vpc/routes{query_link}"
 
     result = []
-    p = {'marker': ''}
+    p = {"marker": ""}
     while True:
         url = link.format(**p)
         r = send_list_request(module, client, url)
@@ -281,7 +280,7 @@ def search_resource(config):
         if len(result) > 1:
             break
 
-        p['marker'] = r[-1].get('id')
+        p["marker"] = r[-1].get("id")
 
     return result
 
@@ -318,8 +317,7 @@ def send_create_request(module, params, client):
     try:
         r = client.post(url, params)
     except HwcClientException as ex:
-        msg = ("module(hwc_vpc_route): error running "
-               "api(create), error: %s" % str(ex))
+        msg = f"module(hwc_vpc_route): error running api(create), error: {ex}"
         module.fail_json(msg=msg)
 
     return r
@@ -331,8 +329,7 @@ def send_delete_request(module, params, client):
     try:
         r = client.delete(url, params)
     except HwcClientException as ex:
-        msg = ("module(hwc_vpc_route): error running "
-               "api(delete), error: %s" % str(ex))
+        msg = f"module(hwc_vpc_route): error running api(delete), error: {ex}"
         module.fail_json(msg=msg)
 
     return r
@@ -345,8 +342,7 @@ def send_read_request(module, client):
     try:
         r = client.get(url)
     except HwcClientException as ex:
-        msg = ("module(hwc_vpc_route): error running "
-               "api(read), error: %s" % str(ex))
+        msg = f"module(hwc_vpc_route): error running api(read), error: {ex}"
         module.fail_json(msg=msg)
 
     return navigate_value(r, ["route"], None)
@@ -390,13 +386,11 @@ def update_properties(module, response, array_index, exclude_output=False):
 
 
 def send_list_request(module, client, url):
-
     r = None
     try:
         r = client.get(url)
     except HwcClientException as ex:
-        msg = ("module(hwc_vpc_route): error running "
-               "api(list), error: %s" % str(ex))
+        msg = f"module(hwc_vpc_route): error running api(list), error: {ex}"
         module.fail_json(msg=msg)
 
     return navigate_value(r, ["routes"], None)
@@ -439,5 +433,5 @@ def fill_list_resp_body(body):
     return result
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

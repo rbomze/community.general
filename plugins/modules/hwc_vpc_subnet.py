@@ -1,110 +1,96 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2019 Huawei
 # GNU General Public License v3.0+ (see LICENSES/GPL-3.0-or-later.txt or https://www.gnu.org/licenses/gpl-3.0.txt)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
+from __future__ import annotations
 
 ###############################################################################
 # Documentation
 ###############################################################################
 
-DOCUMENTATION = '''
----
+DOCUMENTATION = r"""
 module: hwc_vpc_subnet
 description:
-    - subnet management.
-short_description: Creates a resource of Vpc/Subnet in Huawei Cloud
+  - Subnet management.
+short_description: Creates a resource of VPC/Subnet in Huawei Cloud
 version_added: '0.2.0'
 author: Huawei Inc. (@huaweicloud)
 requirements:
-    - keystoneauth1 >= 3.6.0
+  - keystoneauth1 >= 3.6.0
 attributes:
-    check_mode:
-        support: full
-    diff_mode:
-        support: none
+  check_mode:
+    support: full
+  diff_mode:
+    support: none
 options:
-    state:
+  state:
+    description:
+      - Whether the given object should exist in Huawei Cloud.
+    type: str
+    choices: ['present', 'absent']
+    default: 'present'
+  timeouts:
+    description:
+      - The timeouts for each operations.
+    type: dict
+    default: {}
+    suboptions:
+      create:
         description:
-            - Whether the given object should exist in Huawei Cloud.
+          - The timeouts for create operation.
         type: str
-        choices: ['present', 'absent']
-        default: 'present'
-    timeouts:
+        default: '15m'
+      update:
         description:
-            - The timeouts for each operations.
-        type: dict
-        default: {}
-        suboptions:
-            create:
-                description:
-                    - The timeouts for create operation.
-                type: str
-                default: '15m'
-            update:
-                description:
-                    - The timeouts for update operation.
-                type: str
-                default: '15m'
-    cidr:
-        description:
-            - Specifies the subnet CIDR block. The value must be within the VPC
-              CIDR block and be in CIDR format. The subnet mask cannot be
-              greater than 28. Cannot be changed after creating the subnet.
+          - The timeouts for update operation.
         type: str
-        required: true
-    gateway_ip:
-        description:
-            - Specifies the gateway of the subnet. The value must be an IP
-              address in the subnet. Cannot be changed after creating the subnet.
-        type: str
-        required: true
-    name:
-        description:
-            - Specifies the subnet name. The value is a string of 1 to 64
-              characters that can contain letters, digits, underscores (V(_)),
-              hyphens (V(-)), and periods (V(.)).
-        type: str
-        required: true
-    vpc_id:
-        description:
-            - Specifies the ID of the VPC to which the subnet belongs. Cannot
-              be changed after creating the subnet.
-        type: str
-        required: true
-    availability_zone:
-        description:
-            - Specifies the AZ to which the subnet belongs. Cannot be changed
-              after creating the subnet.
-        type: str
-        required: false
-    dhcp_enable:
-        description:
-            - Specifies whether DHCP is enabled for the subnet. The value can
-              be true (enabled) or false(disabled), and default value is true.
-              If this parameter is set to false, newly created ECSs cannot
-              obtain IP addresses, and usernames and passwords cannot be
-              injected using Cloud-init.
-        type: bool
-        required: false
-    dns_address:
-        description:
-            - Specifies the DNS server addresses for subnet. The address
-              in the head will be used first.
-        type: list
-        elements: str
-        required: false
+        default: '15m'
+  cidr:
+    description:
+      - Specifies the subnet CIDR block. The value must be within the VPC CIDR block and be in CIDR format. The subnet mask
+        cannot be greater than 28. Cannot be changed after creating the subnet.
+    type: str
+    required: true
+  gateway_ip:
+    description:
+      - Specifies the gateway of the subnet. The value must be an IP address in the subnet. Cannot be changed after creating
+        the subnet.
+    type: str
+    required: true
+  name:
+    description:
+      - Specifies the subnet name. The value is a string of 1 to 64 characters that can contain letters, digits, underscores
+        (V(_)), hyphens (V(-)), and periods (V(.)).
+    type: str
+    required: true
+  vpc_id:
+    description:
+      - Specifies the ID of the VPC to which the subnet belongs. Cannot be changed after creating the subnet.
+    type: str
+    required: true
+  availability_zone:
+    description:
+      - Specifies the AZ to which the subnet belongs. Cannot be changed after creating the subnet.
+    type: str
+  dhcp_enable:
+    description:
+      - Specifies whether DHCP is enabled for the subnet. The value can be true (enabled) or false(disabled), and default
+        value is true. If this parameter is set to false, newly created ECSs cannot obtain IP addresses, and usernames and
+        passwords cannot be injected using Cloud-init.
+    type: bool
+  dns_address:
+    description:
+      - Specifies the DNS server addresses for subnet. The address in the head is used first.
+    type: list
+    elements: str
 extends_documentation_fragment:
-  - community.general.hwc
-  - community.general.attributes
+  - community.general._hwc
+  - community.general._attributes
+"""
 
-'''
-
-EXAMPLES = '''
+EXAMPLES = r"""
 # create subnet
 - name: Create vpc
   hwc_network_vpc:
@@ -118,78 +104,83 @@ EXAMPLES = '''
     gateway_ip: "192.168.100.32"
     name: "ansible_network_subnet_test"
     dhcp_enable: true
-'''
+"""
 
-RETURN = '''
-    cidr:
-        description:
-            - Specifies the subnet CIDR block. The value must be within the VPC
-              CIDR block and be in CIDR format. The subnet mask cannot be
-              greater than 28.
-        type: str
-        returned: success
-    gateway_ip:
-        description:
-            - Specifies the gateway of the subnet. The value must be an IP
-              address in the subnet.
-        type: str
-        returned: success
-    name:
-        description:
-            - Specifies the subnet name. The value is a string of 1 to 64
-              characters that can contain letters, digits, underscores (V(_)),
-              hyphens (V(-)), and periods (V(.)).
-        type: str
-        returned: success
-    vpc_id:
-        description:
-            - Specifies the ID of the VPC to which the subnet belongs.
-        type: str
-        returned: success
-    availability_zone:
-        description:
-            - Specifies the AZ to which the subnet belongs.
-        type: str
-        returned: success
-    dhcp_enable:
-        description:
-            - Specifies whether DHCP is enabled for the subnet. The value can
-              be true (enabled) or false(disabled), and default value is true.
-              If this parameter is set to false, newly created ECSs cannot
-              obtain IP addresses, and usernames and passwords cannot be
-              injected using Cloud-init.
-        type: bool
-        returned: success
-    dns_address:
-        description:
-            - Specifies the DNS server addresses for subnet. The address
-              in the head will be used first.
-        type: list
-        returned: success
-'''
+RETURN = r"""
+cidr:
+  description:
+    - Specifies the subnet CIDR block. The value must be within the VPC CIDR block and be in CIDR format. The subnet mask
+      cannot be greater than 28.
+  type: str
+  returned: success
+gateway_ip:
+  description:
+    - Specifies the gateway of the subnet. The value must be an IP address in the subnet.
+  type: str
+  returned: success
+name:
+  description:
+    - Specifies the subnet name. The value is a string of 1 to 64 characters that can contain letters, digits, underscores
+      (V(_)), hyphens (V(-)), and periods (V(.)).
+  type: str
+  returned: success
+vpc_id:
+  description:
+    - Specifies the ID of the VPC to which the subnet belongs.
+  type: str
+  returned: success
+availability_zone:
+  description:
+    - Specifies the AZ to which the subnet belongs.
+  type: str
+  returned: success
+dhcp_enable:
+  description:
+    - Specifies whether DHCP is enabled for the subnet. The value can be true (enabled) or false(disabled), and default value
+      is true. If this parameter is set to false, newly created ECSs cannot obtain IP addresses, and usernames and passwords
+      cannot be injected using Cloud-init.
+  type: bool
+  returned: success
+dns_address:
+  description:
+    - Specifies the DNS server addresses for subnet. The address in the head is used first.
+  type: list
+  returned: success
+"""
 
-from ansible_collections.community.general.plugins.module_utils.hwc_utils import (
-    Config, HwcClientException, HwcClientException404, HwcModule,
-    are_different_dicts, build_path, get_region, is_empty_value,
-    navigate_value, wait_to_finish)
+from ansible_collections.community.general.plugins.module_utils._hwc_utils import (
+    Config,
+    HwcClientException,
+    HwcClientException404,
+    HwcModule,
+    are_different_dicts,
+    build_path,
+    get_region,
+    is_empty_value,
+    navigate_value,
+    wait_to_finish,
+)
 
 
 def build_module():
     return HwcModule(
         argument_spec=dict(
-            state=dict(default='present', choices=['present', 'absent'],
-                       type='str'),
-            timeouts=dict(type='dict', options=dict(
-                create=dict(default='15m', type='str'),
-                update=dict(default='15m', type='str'),
-            ), default=dict()),
-            cidr=dict(type='str', required=True),
-            gateway_ip=dict(type='str', required=True),
-            name=dict(type='str', required=True),
-            vpc_id=dict(type='str', required=True),
-            availability_zone=dict(type='str'),
-            dhcp_enable=dict(type='bool'),
-            dns_address=dict(type='list', elements='str')
+            state=dict(default="present", choices=["present", "absent"], type="str"),
+            timeouts=dict(
+                type="dict",
+                options=dict(
+                    create=dict(default="15m", type="str"),
+                    update=dict(default="15m", type="str"),
+                ),
+                default=dict(),
+            ),
+            cidr=dict(type="str", required=True),
+            gateway_ip=dict(type="str", required=True),
+            name=dict(type="str", required=True),
+            vpc_id=dict(type="str", required=True),
+            availability_zone=dict(type="str"),
+            dhcp_enable=dict(type="bool"),
+            dns_address=dict(type="list", elements="str"),
         ),
         supports_check_mode=True,
     )
@@ -203,21 +194,20 @@ def main():
 
     try:
         resource = None
-        if module.params.get('id'):
+        if module.params["id"]:
             resource = True
         else:
             v = search_resource(config)
             if len(v) > 1:
-                raise Exception("Found more than one resource(%s)" % ", ".join([
-                                navigate_value(i, ["id"]) for i in v]))
+                raise Exception(f"Found more than one resource({', '.join([navigate_value(i, ['id']) for i in v])})")
 
             if len(v) == 1:
                 resource = v[0]
-                module.params['id'] = navigate_value(resource, ["id"])
+                module.params["id"] = navigate_value(resource, ["id"])
 
         result = {}
         changed = False
-        if module.params['state'] == 'present':
+        if module.params["state"] == "present":
             if resource is None:
                 if not module.check_mode:
                     create(config)
@@ -231,7 +221,7 @@ def main():
                 changed = True
 
             result = read_resource(config)
-            result['id'] = module.params.get('id')
+            result["id"] = module.params["id"]
         else:
             if resource:
                 if not module.check_mode:
@@ -242,38 +232,38 @@ def main():
         module.fail_json(msg=str(ex))
 
     else:
-        result['changed'] = changed
+        result["changed"] = changed
         module.exit_json(**result)
 
 
 def user_input_parameters(module):
     return {
-        "availability_zone": module.params.get("availability_zone"),
-        "cidr": module.params.get("cidr"),
-        "dhcp_enable": module.params.get("dhcp_enable"),
-        "dns_address": module.params.get("dns_address"),
-        "gateway_ip": module.params.get("gateway_ip"),
-        "name": module.params.get("name"),
-        "vpc_id": module.params.get("vpc_id"),
+        "availability_zone": module.params["availability_zone"],
+        "cidr": module.params["cidr"],
+        "dhcp_enable": module.params["dhcp_enable"],
+        "dns_address": module.params["dns_address"],
+        "gateway_ip": module.params["gateway_ip"],
+        "name": module.params["name"],
+        "vpc_id": module.params["vpc_id"],
     }
 
 
 def create(config):
     module = config.module
     client = config.client(get_region(module), "vpc", "project")
-    timeout = 60 * int(module.params['timeouts']['create'].rstrip('m'))
+    timeout = 60 * int(module.params["timeouts"]["create"].rstrip("m"))
     opts = user_input_parameters(module)
 
     params = build_create_parameters(opts)
     r = send_create_request(module, params, client)
     obj = async_wait_create(config, r, client, timeout)
-    module.params['id'] = navigate_value(obj, ["subnet", "id"])
+    module.params["id"] = navigate_value(obj, ["subnet", "id"])
 
 
 def update(config):
     module = config.module
     client = config.client(get_region(module), "vpc", "project")
-    timeout = 60 * int(module.params['timeouts']['update'].rstrip('m'))
+    timeout = 60 * int(module.params["timeouts"]["update"].rstrip("m"))
     opts = user_input_parameters(module)
 
     params = build_update_parameters(opts)
@@ -301,13 +291,11 @@ def delete(config):
 
         return True, "Pending"
 
-    timeout = 60 * int(module.params['timeouts']['create'].rstrip('m'))
+    timeout = 60 * int(module.params["timeouts"]["create"].rstrip("m"))
     try:
         wait_to_finish(["Done"], ["Pending"], _refresh_status, timeout)
     except Exception as ex:
-        module.fail_json(msg="module(hwc_vpc_subnet): error "
-                             "waiting for api(delete) to "
-                             "be done, error= %s" % str(ex))
+        module.fail_json(msg=f"module(hwc_vpc_subnet): error waiting for api(delete) to be done, error= {ex}")
 
 
 def read_resource(config, exclude_output=False):
@@ -326,7 +314,7 @@ def _build_query_link(opts):
     query_link = "?marker={marker}&limit=10"
     v = navigate_value(opts, ["vpc_id"])
     if v:
-        query_link += "&vpc_id=" + str(v)
+        query_link += f"&vpc_id={v}"
 
     return query_link
 
@@ -337,10 +325,10 @@ def search_resource(config):
     opts = user_input_parameters(module)
     identity_obj = _build_identity_object(opts)
     query_link = _build_query_link(opts)
-    link = "subnets" + query_link
+    link = f"subnets{query_link}"
 
     result = []
-    p = {'marker': ''}
+    p = {"marker": ""}
     while True:
         url = link.format(**p)
         r = send_list_request(module, client, url)
@@ -355,7 +343,7 @@ def search_resource(config):
         if len(result) > 1:
             break
 
-        p['marker'] = r[-1].get('id')
+        p["marker"] = r[-1].get("id")
 
     return result
 
@@ -427,8 +415,7 @@ def send_create_request(module, params, client):
     try:
         r = client.post(url, params)
     except HwcClientException as ex:
-        msg = ("module(hwc_vpc_subnet): error running "
-               "api(create), error: %s" % str(ex))
+        msg = f"module(hwc_vpc_subnet): error running api(create), error: {ex}"
         module.fail_json(msg=msg)
 
     return r
@@ -440,8 +427,7 @@ def async_wait_create(config, result, client, timeout):
     path_parameters = {
         "subnet_id": ["subnet", "id"],
     }
-    data = dict((key, navigate_value(result, path))
-                for key, path in path_parameters.items())
+    data = {key: navigate_value(result, path) for key, path in path_parameters.items()}
 
     url = build_path(module, "subnets/{subnet_id}", data)
 
@@ -459,14 +445,9 @@ def async_wait_create(config, result, client, timeout):
             return None, ""
 
     try:
-        return wait_to_finish(
-            ["ACTIVE"],
-            ["UNKNOWN"],
-            _query_status, timeout)
+        return wait_to_finish(["ACTIVE"], ["UNKNOWN"], _query_status, timeout)
     except Exception as ex:
-        module.fail_json(msg="module(hwc_vpc_subnet): error "
-                             "waiting for api(create) to "
-                             "be done, error= %s" % str(ex))
+        module.fail_json(msg=f"module(hwc_vpc_subnet): error waiting for api(create) to be done, error= {ex}")
 
 
 def build_update_parameters(opts):
@@ -525,8 +506,7 @@ def send_update_request(module, params, client):
     try:
         r = client.put(url, params)
     except HwcClientException as ex:
-        msg = ("module(hwc_vpc_subnet): error running "
-               "api(update), error: %s" % str(ex))
+        msg = f"module(hwc_vpc_subnet): error running api(update), error: {ex}"
         module.fail_json(msg=msg)
 
     return r
@@ -538,8 +518,7 @@ def async_wait_update(config, result, client, timeout):
     path_parameters = {
         "subnet_id": ["subnet", "id"],
     }
-    data = dict((key, navigate_value(result, path))
-                for key, path in path_parameters.items())
+    data = {key: navigate_value(result, path) for key, path in path_parameters.items()}
 
     url = build_path(module, "subnets/{subnet_id}", data)
 
@@ -557,14 +536,9 @@ def async_wait_update(config, result, client, timeout):
             return None, ""
 
     try:
-        return wait_to_finish(
-            ["ACTIVE"],
-            ["UNKNOWN"],
-            _query_status, timeout)
+        return wait_to_finish(["ACTIVE"], ["UNKNOWN"], _query_status, timeout)
     except Exception as ex:
-        module.fail_json(msg="module(hwc_vpc_subnet): error "
-                             "waiting for api(update) to "
-                             "be done, error= %s" % str(ex))
+        module.fail_json(msg=f"module(hwc_vpc_subnet): error waiting for api(update) to be done, error= {ex}")
 
 
 def send_delete_request(module, params, client):
@@ -573,8 +547,7 @@ def send_delete_request(module, params, client):
     try:
         r = client.delete(url, params)
     except HwcClientException as ex:
-        msg = ("module(hwc_vpc_subnet): error running "
-               "api(delete), error: %s" % str(ex))
+        msg = f"module(hwc_vpc_subnet): error running api(delete), error: {ex}"
         module.fail_json(msg=msg)
 
     return r
@@ -587,8 +560,7 @@ def send_read_request(module, client):
     try:
         r = client.get(url)
     except HwcClientException as ex:
-        msg = ("module(hwc_vpc_subnet): error running "
-               "api(read), error: %s" % str(ex))
+        msg = f"module(hwc_vpc_subnet): error running api(read), error: {ex}"
         module.fail_json(msg=msg)
 
     return navigate_value(r, ["subnet"], None)
@@ -654,13 +626,11 @@ def update_properties(module, response, array_index, exclude_output=False):
 
 
 def send_list_request(module, client, url):
-
     r = None
     try:
         r = client.get(url)
     except HwcClientException as ex:
-        msg = ("module(hwc_vpc_subnet): error running "
-               "api(list), error: %s" % str(ex))
+        msg = f"module(hwc_vpc_subnet): error running api(list), error: {ex}"
         module.fail_json(msg=msg)
 
     return navigate_value(r, ["subnets"], None)
@@ -737,5 +707,5 @@ def fill_list_resp_body(body):
     return result
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

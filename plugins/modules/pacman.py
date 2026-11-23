@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 
 # Copyright (c) 2012, Afterburn <https://github.com/afterburn>
 # Copyright (c) 2013, Aaron Bull Schaefer <aaron@elasticdog.com>
@@ -8,176 +7,172 @@
 # GNU General Public License v3.0+ (see LICENSES/GPL-3.0-or-later.txt or https://www.gnu.org/licenses/gpl-3.0.txt)
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from __future__ import absolute_import, division, print_function
+from __future__ import annotations
 
-__metaclass__ = type
-
-DOCUMENTATION = """
----
+DOCUMENTATION = r"""
 module: pacman
 short_description: Manage packages with I(pacman)
 description:
-    - Manage packages with the I(pacman) package manager, which is used by Arch Linux and its variants.
+  - Manage packages with the I(pacman) package manager, which is used by Arch Linux and its variants.
 author:
-    - Indrajit Raychaudhuri (@indrajitr)
-    - Aaron Bull Schaefer (@elasticdog) <aaron@elasticdog.com>
-    - Maxime de Roucy (@tchernomax)
-    - Jean Raby (@jraby)
+  - Indrajit Raychaudhuri (@indrajitr)
+  - Aaron Bull Schaefer (@elasticdog) <aaron@elasticdog.com>
+  - Maxime de Roucy (@tchernomax)
+  - Jean Raby (@jraby)
 extends_documentation_fragment:
-    - community.general.attributes
+  - community.general._attributes
 attributes:
-    check_mode:
-        support: full
-    diff_mode:
-        support: full
+  check_mode:
+    support: full
+  diff_mode:
+    support: full
 options:
-    name:
-        description:
-            - Name or list of names of the package(s) or file(s) to install, upgrade, or remove.
-              Cannot be used in combination with O(upgrade).
-        aliases: [ package, pkg ]
-        type: list
-        elements: str
-
-    state:
-        description:
-          - Whether to install (V(present) or V(installed), V(latest)), or remove (V(absent) or V(removed)) a package.
-          - V(present) and V(installed) will simply ensure that a desired package is installed.
-          - V(latest) will update the specified package if it is not of the latest available version.
-          - V(absent) and V(removed) will remove the specified package.
-        default: present
-        choices: [ absent, installed, latest, present, removed ]
-        type: str
-
-    force:
-        description:
-            - When removing packages, forcefully remove them, without any checks.
-              Same as O(extra_args="--nodeps --nodeps").
-            - When combined with O(update_cache), force a refresh of all package databases.
-              Same as O(update_cache_extra_args="--refresh --refresh").
-        default: false
-        type: bool
-
-    remove_nosave:
-        description:
-            - When removing packages, do not save modified configuration files as C(.pacsave) files.
-              (passes C(--nosave) to pacman)
-        version_added: 4.6.0
-        default: false
-        type: bool
-
-    executable:
-        description:
-            - Path of the binary to use. This can either be C(pacman) or a pacman compatible AUR helper.
-            - Pacman compatibility is unfortunately ill defined, in particular, this modules makes
-              extensive use of the C(--print-format) directive which is known not to be implemented by
-              some AUR helpers (notably, C(yay)).
-            - Beware that AUR helpers might behave unexpectedly and are therefore not recommended.
-        default: pacman
-        type: str
-        version_added: 3.1.0
-
-    extra_args:
-        description:
-            - Additional option to pass to pacman when enforcing O(state).
-        default: ''
-        type: str
-
-    update_cache:
-        description:
-            - Whether or not to refresh the master package lists.
-            - This can be run as part of a package installation or as a separate step.
-            - If not specified, it defaults to V(false).
-            - Please note that this option only had an influence on the module's C(changed) state
-              if O(name) and O(upgrade) are not specified before community.general 5.0.0.
-              See the examples for how to keep the old behavior.
-        type: bool
-
-    update_cache_extra_args:
-        description:
-            - Additional option to pass to pacman when enforcing O(update_cache).
-        default: ''
-        type: str
-
-    upgrade:
-        description:
-            - Whether or not to upgrade the whole system.
-              Cannot be used in combination with O(name).
-            - If not specified, it defaults to V(false).
-        type: bool
-
-    upgrade_extra_args:
-        description:
-            - Additional option to pass to pacman when enforcing O(upgrade).
-        default: ''
-        type: str
-
-    reason:
-        description:
-            - The install reason to set for the packages.
-        choices: [ dependency, explicit ]
-        type: str
-        version_added: 5.4.0
-
-    reason_for:
-        description:
-            - Set the install reason for V(all) packages or only for V(new) packages.
-            - In case of O(state=latest) already installed packages which will be updated to a newer version are not counted as V(new).
-        default: new
-        choices: [ all, new ]
-        type: str
-        version_added: 5.4.0
-
-notes:
-  - When used with a C(loop:) each package will be processed individually,
-    it is much more efficient to pass the list directly to the O(name) option.
-  - To use an AUR helper (O(executable) option), a few extra setup steps might be required beforehand.
-    For example, a dedicated build user with permissions to install packages could be necessary.
-  - >
-    In the tests, while using C(yay) as the O(executable) option, the module failed to install AUR packages
-    with the error: C(error: target not found: <pkg>).
-"""
-
-RETURN = """
-packages:
+  name:
     description:
-        - A list of packages that have been changed.
-        - Before community.general 4.5.0 this was only returned when O(upgrade=true).
-          In community.general 4.5.0, it was sometimes omitted when the package list is empty,
-          but since community.general 4.6.0 it is always returned when O(name) is specified or
-          O(upgrade=true).
-    returned: success and O(name) is specified or O(upgrade=true)
+      - Name or list of names of the package(s) or file(s) to install, upgrade, or remove. Cannot be used in combination with
+        O(upgrade).
+    aliases: [package, pkg]
     type: list
     elements: str
-    sample: [ package, other-package ]
 
-cache_updated:
+  state:
     description:
-        - The changed status of C(pacman -Sy).
-        - Useful when O(name) or O(upgrade=true) are specified next to O(update_cache=true).
-    returned: success, when O(update_cache=true)
+      - Whether to install (V(present) or V(installed), V(latest)), or remove (V(absent) or V(removed)) a package.
+      - V(present) and V(installed) simply ensure that a desired package is installed.
+      - V(latest) updates the specified package if it is not of the latest available version.
+      - V(absent) and V(removed) remove the specified package.
+    default: present
+    choices: [absent, installed, latest, present, removed]
+    type: str
+
+  force:
+    description:
+      - When removing packages, forcefully remove them, without any checks. Same as O(extra_args="--nodeps --nodeps").
+      - When combined with O(update_cache), force a refresh of all package databases. Same as O(update_cache_extra_args="--refresh
+        --refresh").
+    default: false
     type: bool
-    sample: false
+
+  remove_nosave:
+    description:
+      - When removing packages, do not save modified configuration files as C(.pacsave) files. (passes C(--nosave) to pacman).
     version_added: 4.6.0
+    default: false
+    type: bool
 
-stdout:
+  executable:
     description:
-        - Output from pacman.
-    returned: success, when needed
+      - Path of the binary to use. This can either be C(pacman) or a pacman compatible AUR helper.
+      - Pacman compatibility is unfortunately ill defined, in particular, this modules makes extensive use of the C(--print-format)
+        directive which is known not to be implemented by some AUR helpers (notably, C(yay)).
+      - Beware that AUR helpers might behave unexpectedly and are therefore not recommended.
+    default: pacman
     type: str
-    sample: ":: Synchronizing package databases...  core is up to date :: Starting full system upgrade..."
-    version_added: 4.1.0
+    version_added: 3.1.0
 
-stderr:
+  extra_args:
     description:
-        - Error output from pacman.
-    returned: success, when needed
+      - Additional option to pass to pacman when enforcing O(state).
+    default: ''
     type: str
-    sample: "warning: libtool: local (2.4.6+44+gb9b44533-14) is newer than core (2.4.6+42+gb88cebd5-15)\nwarning ..."
-    version_added: 4.1.0
+
+  root:
+    description:
+      - An alternative installation root directory, passed as C(--root) to all pacman commands.
+      - Useful for installing packages into a chroot or a new system root, similarly to how C(pacstrap) works.
+    type: path
+    version_added: 12.6.0
+
+  cachedir:
+    description:
+      - An alternative package cache directory, passed as C(--cachedir) to all pacman commands.
+      - Only used when O(root) is also specified.
+    type: path
+    version_added: 12.6.0
+
+  config:
+    description:
+      - Path to an alternative pacman configuration file, passed as C(--config) to all pacman commands.
+    type: path
+    version_added: 12.6.0
+
+  update_cache:
+    description:
+      - Whether or not to refresh the master package lists.
+      - This can be run as part of a package installation or as a separate step.
+      - If not specified, it defaults to V(false).
+      - Please note that this option only had an influence on the module's RV(ignore:changed) state if O(name) and O(upgrade) are
+        not specified before community.general 5.0.0. See the examples for how to keep the old behavior.
+    type: bool
+
+  update_cache_extra_args:
+    description:
+      - Additional option to pass to pacman when enforcing O(update_cache).
+    default: ''
+    type: str
+
+  upgrade:
+    description:
+      - Whether or not to upgrade the whole system. Cannot be used in combination with O(name).
+      - If not specified, it defaults to V(false).
+    type: bool
+
+  upgrade_extra_args:
+    description:
+      - Additional option to pass to pacman when enforcing O(upgrade).
+    default: ''
+    type: str
+
+  reason:
+    description:
+      - The install reason to set for the packages.
+    choices: [dependency, explicit]
+    type: str
+    version_added: 5.4.0
+
+  reason_for:
+    description:
+      - Set the install reason for V(all) packages or only for V(new) packages.
+      - In case of O(state=latest) already installed packages which are updated to a newer version are not counted as V(new).
+    default: new
+    choices: [all, new]
+    type: str
+    version_added: 5.4.0
+
+notes:
+  - When used with a C(loop:) each package is processed individually, it is much more efficient to pass the list directly
+    to the O(name) option.
+  - To use an AUR helper (O(executable) option), a few extra setup steps might be required beforehand. For example, a dedicated
+    build user with permissions to install packages could be necessary.
+  - 'In the tests, while using C(yay) as the O(executable) option, the module failed to install AUR packages with the error:
+    C(error: target not found: <pkg>). This is caused by an incompatibility of yay with the arguments passed by this module.
+    See L(yay bug #1744 report for details, https://github.com/Jguer/yay/issues/1744).'
+  - The common return values RV(ignore:stdout) and RV(ignore:stderr) are returned upon success, when needed, since community.general 4.1.0.
 """
 
-EXAMPLES = """
+RETURN = r"""
+packages:
+  description:
+    - A list of packages that have been changed.
+    - Before community.general 4.5.0 this was only returned when O(upgrade=true). In community.general 4.5.0, it was sometimes
+      omitted when the package list is empty, but since community.general 4.6.0 it is always returned when O(name) is specified
+      or O(upgrade=true).
+  returned: success and O(name) is specified or O(upgrade=true)
+  type: list
+  elements: str
+  sample: ["package", "other-package"]
+
+cache_updated:
+  description:
+    - The changed status of C(pacman -Sy).
+    - Useful when O(name) or O(upgrade=true) are specified next to O(update_cache=true).
+  returned: success, when O(update_cache=true)
+  type: bool
+  sample: false
+  version_added: 4.6.0
+"""
+
+EXAMPLES = r"""
 - name: Install package foo from repo
   community.general.pacman:
     name: foo
@@ -264,15 +259,29 @@ EXAMPLES = """
     state: present
     reason: explicit
     reason_for: all
+
+- name: Install packages into a new root (similar to pacstrap)
+  community.general.pacman:
+    name:
+      - base
+      - base-devel
+      - python
+    state: present
+    root: /mnt
+    cachedir: /mnt/var/cache/pacman/pkg
+    config: /path/to/another/pacman.conf
+    update_cache: true
 """
 
 import re
 import shlex
+from collections import defaultdict
+from dataclasses import dataclass
+
 from ansible.module_utils.basic import AnsibleModule
-from collections import defaultdict, namedtuple
 
 
-class Package(object):
+class Package:
     def __init__(self, name, source, source_is_URL=False):
         self.name = name
         self.source = source
@@ -285,17 +294,20 @@ class Package(object):
         return self.name < o.name
 
     def __repr__(self):
-        return 'Package("%s", "%s", %s)' % (self.name, self.source, self.source_is_URL)
+        return f'Package("{self.name}", "{self.source}", {self.source_is_URL})'
 
 
-VersionTuple = namedtuple("VersionTuple", ["current", "latest"])
+@dataclass
+class VersionTuple:
+    current: str
+    latest: str
 
 
-class Pacman(object):
+class Pacman:
     def __init__(self, module):
         self.m = module
 
-        self.m.run_command_environ_update = dict(LC_ALL="C")
+        self.m.run_command_environ_update = dict(LANGUAGE="C", LC_ALL="C")
         p = self.m.params
 
         self._msgs = []
@@ -305,6 +317,14 @@ class Pacman(object):
         self.exit_params = {}
 
         self.pacman_path = self.m.get_bin_path(p["executable"], True)
+
+        self.pacman_cmd = [self.pacman_path]
+        if p["config"]:
+            self.pacman_cmd += ["--config", p["config"]]
+        if p["root"]:
+            self.pacman_cmd += ["--root", p["root"]]
+            if p["cachedir"]:
+                self.pacman_cmd += ["--cachedir", p["cachedir"]]
 
         self._cached_database = None
 
@@ -367,8 +387,9 @@ class Pacman(object):
                 self.install_packages(pkgs)
                 self.success()
 
-        # This shouldn't happen...
-        self.fail("This is a bug")
+        # This happens if an empty list has been provided for name
+        self.add_exit_infos(msg="Nothing to do")
+        self.success()
 
     def install_packages(self, pkgs):
         pkgs_to_install = []
@@ -398,8 +419,7 @@ class Pacman(object):
             self.add_exit_infos("package(s) already installed")
             return
 
-        cmd_base = [
-            self.pacman_path,
+        cmd_base = self.pacman_cmd + [
             "--noconfirm",
             "--noprogressbar",
             "--needed",
@@ -422,17 +442,19 @@ class Pacman(object):
             for p in name_ver:
                 # With Pacman v6.0.1 - libalpm v13.0.1, --upgrade outputs "loading packages..." on stdout. strip that.
                 # When installing from URLs, pacman can also output a 'nothing to do' message. strip that too.
-                if "loading packages" in p or "there is nothing to do" in p or 'Avoid running' in p:
+                if "loading packages" in p or "there is nothing to do" in p or "Avoid running" in p:
                     continue
                 name, version = p.split()
                 if name in self.inventory["installed_pkgs"]:
-                    before.append("%s-%s-%s" % (name, self.inventory["installed_pkgs"][name], self.inventory["pkg_reasons"][name]))
+                    before.append(
+                        f"{name}-{self.inventory['installed_pkgs'][name]}-{self.inventory['pkg_reasons'][name]}"
+                    )
                 if name in pkgs_to_set_reason:
-                    after.append("%s-%s-%s" % (name, version, self.m.params["reason"]))
+                    after.append(f"{name}-{version}-{self.m.params['reason']}")
                 elif name in self.inventory["pkg_reasons"]:
-                    after.append("%s-%s-%s" % (name, version, self.inventory["pkg_reasons"][name]))
+                    after.append(f"{name}-{version}-{self.inventory['pkg_reasons'][name]}")
                 else:
-                    after.append("%s-%s" % (name, version))
+                    after.append(f"{name}-{version}")
                 to_be_installed.append(name)
 
             return (to_be_installed, before, after)
@@ -460,15 +482,17 @@ class Pacman(object):
 
         self.changed = True
 
+        _before_joined = "\n".join(sorted(before))
+        _after_joined = "\n".join(sorted(after))
         self.exit_params["diff"] = {
-            "before": "\n".join(sorted(before)) + "\n" if before else "",
-            "after": "\n".join(sorted(after)) + "\n" if after else "",
+            "before": f"{_before_joined}\n" if before else "",
+            "after": f"{_after_joined}\n" if after else "",
         }
 
         changed_reason_pkgs = [p for p in pkgs_to_set_reason if p not in installed_pkgs]
 
         if self.m.check_mode:
-            self.add_exit_infos("Would have installed %d packages" % (len(installed_pkgs) + len(changed_reason_pkgs)))
+            self.add_exit_infos(f"Would have installed {len(installed_pkgs) + len(changed_reason_pkgs)} packages")
             self.exit_params["packages"] = sorted(installed_pkgs + changed_reason_pkgs)
             return
 
@@ -488,7 +512,7 @@ class Pacman(object):
 
         # set reason
         if pkgs_to_set_reason:
-            cmd = [self.pacman_path, "--noconfirm", "--database"]
+            cmd = self.pacman_cmd + ["--noconfirm", "--database"]
             if self.m.params["reason"] == "dependency":
                 cmd.append("--asdeps")
             else:
@@ -501,7 +525,7 @@ class Pacman(object):
             self.add_exit_infos(stdout=stdout, stderr=stderr)
 
         self.exit_params["packages"] = sorted(installed_pkgs + changed_reason_pkgs)
-        self.add_exit_infos("Installed %d package(s)" % (len(installed_pkgs) + len(changed_reason_pkgs)))
+        self.add_exit_infos(f"Installed {len(installed_pkgs) + len(changed_reason_pkgs)} package(s)")
 
     def remove_packages(self, pkgs):
         # filter out pkgs that are already absent
@@ -515,7 +539,7 @@ class Pacman(object):
         # There's something to do, set this in advance
         self.changed = True
 
-        cmd_base = [self.pacman_path, "--remove", "--noconfirm", "--noprogressbar"]
+        cmd_base = self.pacman_cmd + ["--remove", "--noconfirm", "--noprogressbar"]
         cmd_base += self.m.params["extra_args"]
         cmd_base += ["--nodeps", "--nodeps"] if self.m.params["force"] else []
         # nosave_args conflicts with --print-format. Added later.
@@ -532,14 +556,15 @@ class Pacman(object):
 
         removed_pkgs = stdout.split()
         self.exit_params["packages"] = removed_pkgs
+        _remove_pkgs_joined = "\n".join(removed_pkgs)
         self.exit_params["diff"] = {
-            "before": "\n".join(removed_pkgs) + "\n",  # trailing \n to avoid diff complaints
+            "before": f"{_remove_pkgs_joined}\n",  # trailing \n to avoid diff complaints
             "after": "",
         }
 
         if self.m.check_mode:
             self.exit_params["packages"] = removed_pkgs
-            self.add_exit_infos("Would have removed %d packages" % len(removed_pkgs))
+            self.add_exit_infos(f"Would have removed {len(removed_pkgs)} packages")
             return
 
         nosave_args = ["--nosave"] if self.m.params["remove_nosave"] else []
@@ -550,7 +575,7 @@ class Pacman(object):
             self.fail("failed to remove package(s)", cmd=cmd, stdout=stdout, stderr=stderr)
         self._invalidate_database()
         self.exit_params["packages"] = removed_pkgs
-        self.add_exit_infos("Removed %d package(s)" % len(removed_pkgs), stdout=stdout, stderr=stderr)
+        self.add_exit_infos(f"Removed {len(removed_pkgs)} package(s)", stdout=stdout, stderr=stderr)
 
     def upgrade(self):
         """Runs pacman --sync --sysupgrade if there are upgradable packages"""
@@ -564,18 +589,15 @@ class Pacman(object):
         # Build diff based on inventory first.
         diff = {"before": "", "after": ""}
         for pkg, versions in self.inventory["upgradable_pkgs"].items():
-            diff["before"] += "%s-%s\n" % (pkg, versions.current)
-            diff["after"] += "%s-%s\n" % (pkg, versions.latest)
+            diff["before"] += f"{pkg}-{versions.current}\n"
+            diff["after"] += f"{pkg}-{versions.latest}\n"
         self.exit_params["diff"] = diff
         self.exit_params["packages"] = self.inventory["upgradable_pkgs"].keys()
 
         if self.m.check_mode:
-            self.add_exit_infos(
-                "%d packages would have been upgraded" % (len(self.inventory["upgradable_pkgs"]))
-            )
+            self.add_exit_infos(f"{len(self.inventory['upgradable_pkgs'])} packages would have been upgraded")
         else:
-            cmd = [
-                self.pacman_path,
+            cmd = self.pacman_cmd + [
                 "--sync",
                 "--sysupgrade",
                 "--quiet",
@@ -593,7 +615,7 @@ class Pacman(object):
     def _list_database(self):
         """runs pacman --sync --list with some caching"""
         if self._cached_database is None:
-            dummy, packages, dummy = self.m.run_command([self.pacman_path, '--sync', '--list'], check_rc=True)
+            dummy, packages, dummy = self.m.run_command(self.pacman_cmd + ["--sync", "--list"], check_rc=True)
             self._cached_database = packages.splitlines()
         return self._cached_database
 
@@ -609,8 +631,7 @@ class Pacman(object):
             self.exit_params["cache_updated"] = True
             return
 
-        cmd = [
-            self.pacman_path,
+        cmd = self.pacman_cmd + [
             "--sync",
             "--refresh",
         ]
@@ -666,18 +687,18 @@ class Pacman(object):
                 # pkg is possibly in the <repo>/<pkgname> format, or a filename or a URL
 
                 # Start with <repo>/<pkgname> case
-                cmd = [self.pacman_path, "--sync", "--print-format", "%n", pkg]
+                cmd = self.pacman_cmd + ["--sync", "--print-format", "%n", pkg]
                 rc, stdout, stderr = self.m.run_command(cmd, check_rc=False)
                 if rc != 0:
                     # fallback to filename / URL
-                    cmd = [self.pacman_path, "--upgrade", "--print-format", "%n", pkg]
+                    cmd = self.pacman_cmd + ["--upgrade", "--print-format", "%n", pkg]
                     rc, stdout, stderr = self.m.run_command(cmd, check_rc=False)
                     if rc != 0:
                         if self.target_state == "absent":
                             continue  # Don't bark for unavailable packages when trying to remove them
                         else:
                             self.fail(
-                                msg="Failed to list package %s" % (pkg),
+                                msg=f"Failed to list package {pkg}",
                                 cmd=cmd,
                                 stdout=stdout,
                                 stderr=stderr,
@@ -700,7 +721,7 @@ class Pacman(object):
             "installed_groups": {groupname: set(pkgnames)},
             "available_pkgs": {pkgname: version},
             "available_groups": {groupname: set(pkgnames)},
-            "upgradable_pkgs": {pkgname: (current_version,latest_version)},
+            "upgradable_pkgs": {pkgname: VersionTuple},
             "pkg_reasons": {pkgname: reason},
         }
 
@@ -708,9 +729,9 @@ class Pacman(object):
         """
 
         installed_pkgs = {}
-        dummy, stdout, dummy = self.m.run_command([self.pacman_path, "--query"], check_rc=True)
+        dummy, stdout, dummy = self.m.run_command(self.pacman_cmd + ["--query"], check_rc=True)
         # Format of a line: "pacman 6.0.1-2"
-        query_re = re.compile(r'^\s*(?P<pkg>\S+)\s+(?P<ver>\S+)\s*$')
+        query_re = re.compile(r"^\s*(?P<pkg>\S+)\s+(?P<ver>\S+)\s*$")
         for l in stdout.splitlines():
             query_match = query_re.match(l)
             if not query_match:
@@ -719,14 +740,12 @@ class Pacman(object):
             installed_pkgs[pkg] = ver
 
         installed_groups = defaultdict(set)
-        dummy, stdout, dummy = self.m.run_command(
-            [self.pacman_path, "--query", "--groups"], check_rc=True
-        )
+        dummy, stdout, dummy = self.m.run_command(self.pacman_cmd + ["--query", "--groups"], check_rc=True)
         # Format of lines:
         #     base-devel file
         #     base-devel findutils
         #     ...
-        query_groups_re = re.compile(r'^\s*(?P<group>\S+)\s+(?P<pkg>\S+)\s*$')
+        query_groups_re = re.compile(r"^\s*(?P<group>\S+)\s+(?P<pkg>\S+)\s*$")
         for l in stdout.splitlines():
             query_groups_match = query_groups_re.match(l)
             if not query_groups_match:
@@ -745,15 +764,13 @@ class Pacman(object):
             available_pkgs[pkg] = ver
 
         available_groups = defaultdict(set)
-        dummy, stdout, dummy = self.m.run_command(
-            [self.pacman_path, "--sync", "--groups", "--groups"], check_rc=True
-        )
+        dummy, stdout, dummy = self.m.run_command(self.pacman_cmd + ["--sync", "--groups", "--groups"], check_rc=True)
         # Format of lines:
         #     vim-plugins vim-airline
         #     vim-plugins vim-airline-themes
         #     vim-plugins vim-ale
         #     ...
-        sync_groups_re = re.compile(r'^\s*(?P<group>\S+)\s+(?P<pkg>\S+)\s*$')
+        sync_groups_re = re.compile(r"^\s*(?P<group>\S+)\s+(?P<pkg>\S+)\s*$")
         for l in stdout.splitlines():
             sync_groups_match = sync_groups_re.match(l)
             if not sync_groups_match:
@@ -762,9 +779,7 @@ class Pacman(object):
             available_groups[group].add(pkg)
 
         upgradable_pkgs = {}
-        rc, stdout, stderr = self.m.run_command(
-            [self.pacman_path, "--query", "--upgrades"], check_rc=False
-        )
+        rc, stdout, stderr = self.m.run_command(self.pacman_cmd + ["--query", "--upgrades"], check_rc=False)
 
         stdout = stdout.splitlines()
         if stdout and "Avoid running" in stdout[0]:
@@ -779,6 +794,7 @@ class Pacman(object):
             # Format of lines:
             #     strace 5.14-1 -> 5.15-1
             #     systemd 249.7-1 -> 249.7-2 [ignored]
+            yay_age_badge_re = re.compile(r"^\[(?:\d+[dhm])+\]$")
             for l in stdout.splitlines():
                 l = l.strip()
                 if not l:
@@ -786,8 +802,11 @@ class Pacman(object):
                 if "[ignored]" in l or "Avoid running" in l:
                     continue
                 s = l.split()
+                # yay appends an age badge for AUR packages, e.g. "pkg 1.0-1 -> 1.1-1 [9d2h]"
+                if len(s) == 5 and yay_age_badge_re.match(s[4]):
+                    del s[4]
                 if len(s) != 4:
-                    self.fail(msg="Invalid line: %s" % l)
+                    self.fail(msg=f"Invalid line: {l}")
 
                 pkg = s[0]
                 current = s[1]
@@ -803,7 +822,7 @@ class Pacman(object):
             )
 
         pkg_reasons = {}
-        dummy, stdout, dummy = self.m.run_command([self.pacman_path, "--query", "--explicit"], check_rc=True)
+        dummy, stdout, dummy = self.m.run_command(self.pacman_cmd + ["--query", "--explicit"], check_rc=True)
         # Format of a line: "pacman 6.0.1-2"
         for l in stdout.splitlines():
             l = l.strip()
@@ -811,7 +830,7 @@ class Pacman(object):
                 continue
             pkg = l.split()[0]
             pkg_reasons[pkg] = "explicit"
-        dummy, stdout, dummy = self.m.run_command([self.pacman_path, "--query", "--deps"], check_rc=True)
+        dummy, stdout, dummy = self.m.run_command(self.pacman_cmd + ["--query", "--deps"], check_rc=True)
         # Format of a line: "pacman 6.0.1-2"
         for l in stdout.splitlines():
             l = l.strip()
@@ -843,6 +862,9 @@ def setup_module():
             remove_nosave=dict(type="bool", default=False),
             executable=dict(type="str", default="pacman"),
             extra_args=dict(type="str", default=""),
+            root=dict(type="path"),
+            cachedir=dict(type="path"),
+            config=dict(type="path"),
             upgrade=dict(type="bool"),
             upgrade_extra_args=dict(type="str", default=""),
             update_cache=dict(type="bool"),
@@ -863,7 +885,6 @@ def setup_module():
 
 
 def main():
-
     Pacman(setup_module()).run()
 
 

@@ -10,8 +10,14 @@
 
 - name: Bail out if not supported
   ansible.builtin.meta: end_play
-  when: ansible_distribution in ('Alpine', 'openSUSE Leap', 'CentOS', 'Fedora')
-
+  # TODO: remove Archlinux from the list
+  # TODO: remove Ubuntu 24.04 or newer from the list
+  # TODO: remove Debian 13 (Trixie) from the list
+  when: >
+    ansible_facts.distribution in ('Alpine', 'openSUSE Leap', 'openSUSE Tumbleweed', 'CentOS', 'Fedora', 'Archlinux', 'Suse')
+    or ansible_facts.os_family == 'Suse'
+    or (ansible_facts.distribution == 'Ubuntu' and ansible_facts.distribution_major_version | int >= 24)
+    or (ansible_facts.distribution == 'Debian' and ansible_facts.distribution_major_version == '13')
 
 - name: Remove ejabberd
   ansible.builtin.package:
@@ -42,12 +48,12 @@
   loop:
     - PrivateDevices
     - AmbientCapabilities
-  when: ansible_distribution == 'Archlinux'
+  when: ansible_facts.distribution == 'Archlinux'
 
 - name: Make installable on Arch
-  systemd:
+  ansible.builtin.systemd:
     daemon_reload: true
-  when: ansible_distribution == 'Archlinux'
+  when: ansible_facts.distribution == 'Archlinux'
 
 - ansible.builtin.service:
     name: ejabberd
